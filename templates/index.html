@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S-Box Research Tool | Professional Edition</title>
+    <title>S-Box Research Tool | Cryptography Project</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -28,55 +28,156 @@
             --text-muted: #9ca3af;
         }
 
-        html {
-            scroll-behavior: smooth; /* Efek scroll halus */
-        }
+        html { scroll-behavior: smooth; }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-body);
             color: var(--text-main);
             min-height: 100vh;
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+            position: relative; /* For canvas positioning */
         }
 
-        /* --- HERO SECTION (FULL SCREEN 100VH) --- */
-        .hero-section {
-            /* KUNCI: Full Height */
-            min-height: 100vh;
+        /* --- BACKGROUND ANIMATION CANVAS --- */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-
-            background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-body) 100%);
-            border-bottom: 1px solid var(--border-color);
-            position: relative;
-            overflow: hidden;
-
-            /* FLEXBOX CENTERING (Vertikal & Horizontal) */
-            display: flex;
-            align-items: center;    /* Tengah Vertikal */
-            justify-content: center; /* Tengah Horizontal */
-            flex-direction: column;
-            padding-top: 60px; /* Kompensasi Navbar Fixed jika ada, atau sekadar jarak atas */
+            height: 100%;
+            z-index: -1; /* Place behind everything */
+            pointer-events: none; /* Allow clicking through */
+            opacity: 0.6; /* Subtle effect */
         }
 
+        /* --- COMPONENTS --- */
+        nav.navbar-custom {
+            position: absolute; top: 0; left: 0; right: 0; z-index: 100;
+            background: transparent; padding: 1.5rem 0;
+        }
+
+        .tech-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .card-header-tech {
+            background-color: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+            font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px;
+            text-transform: uppercase; color: var(--text-muted);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .card-header-tech i { color: var(--primary); }
+
+        .form-control, .form-select {
+            background-color: var(--bg-input) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-main) !important;
+            font-family: 'Inter', sans-serif; font-size: 0.9rem;
+            border-radius: 8px; padding: 0.6rem 1rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+        }
+
+        .btn-primary-tech {
+            background-color: var(--primary); border: none; color: white;
+            font-weight: 600; padding: 12px 20px; border-radius: 8px;
+            transition: all 0.2s; width: 100%;
+        }
+        .btn-primary-tech:hover {
+            background-color: var(--primary-hover); transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        .btn-primary-tech:active { transform: translateY(0); }
+
+        .btn-outline-tech {
+            background: transparent; border: 1px solid var(--border-color); color: var(--text-muted);
+            padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; transition: 0.2s;
+        }
+        .btn-outline-tech:hover { border-color: var(--text-muted); color: white; background: rgba(255,255,255,0.05); }
+
+        /* S-BOX VISUALIZER */
+        .grid-16 {
+            display: grid; grid-template-columns: repeat(16, 1fr);
+            gap: 1px; padding: 2px;
+            background: #000; border-radius: 8px; border: 1px solid var(--border-color);
+        }
+        .cell {
+            aspect-ratio: 1; border-radius: 1px; cursor: crosshair;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.55rem;
+            color: rgba(255, 255, 255, 0.8); font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+        .cell:hover {
+            transform: scale(1.5); z-index: 10;
+            border: 1px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            color: white;
+        }
+
+        .metric-box {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 1rem;
+            height: 100%; display: flex; flex-direction: column; justify-content: center;
+        }
+        .m-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .m-val { font-size: 1.6rem; font-weight: 700; color: white; font-family: 'JetBrains Mono'; line-height: 1; margin-bottom: 6px;}
+        .m-target { font-size: 0.7rem; display: inline-block; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--text-muted); }
+
+        .nav-pills .nav-link { color: var(--text-muted); font-weight: 500; border-radius: 8px; padding: 0.7rem 1.2rem; margin-right: 5px; }
+        .nav-pills .nav-link.active { background-color: rgba(59, 130, 246, 0.1); color: var(--primary); border: 1px solid var(--primary); }
+
+        .table-tech { --bs-table-bg: transparent; --bs-table-color: var(--text-main); border-color: var(--border-color); }
+        .table-tech th { text-transform: uppercase; font-size: 0.75rem; color: var(--text-muted); padding: 12px; font-weight: 600; }
+        .table-tech td { vertical-align: middle; padding: 12px; font-family: 'JetBrains Mono'; font-size: 0.9rem; }
+        .text-win { color: var(--success); font-weight: bold; }
+        .text-lose { color: var(--text-muted); opacity: 0.6; }
+
+        .hidden { display: none !important; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .matrix-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 1px; width: 100px; margin: 0 auto; border: 1px solid #333; }
+        .bit { width: 100%; aspect-ratio: 1; font-size: 8px; display: flex; align-items: center; justify-content: center; color: #555; background: #000; }
+        .bit.active { background: var(--primary); color: white; }
+
+        #loader {
+            position: fixed; inset: 0; background: rgba(17, 17, 17, 0.9); z-index: 9999;
+            display: none; justify-content: center; align-items: center; flex-direction: column;
+        }
+        .spinner { width: 40px; height: 40px; border: 3px solid var(--border-color); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s infinite linear; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- HERO SECTION --- */
+        .hero-section {
+            min-height: 100vh; width: 100%;
+            /* Background gradient is now transparent at top to show particles, solid at bottom */
+            background: linear-gradient(180deg, rgba(26,26,26,0.7) 0%, var(--bg-body) 100%);
+            border-bottom: 1px solid var(--border-color);
+            position: relative; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; padding-top: 60px;
+        }
+
+        /* Grid pattern made lighter for particles */
         .hero-bg-pattern {
             position: absolute; inset: 0;
             background-image: radial-gradient(#ffffff 1px, transparent 1px);
-            background-size: 30px 30px; opacity: 0.03; z-index: 0;
+            background-size: 30px 30px; opacity: 0.02; z-index: 0;
         }
 
-        .hero-content {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-        }
+        .hero-content { position: relative; z-index: 1; width: 100%; }
 
-        /* Logo Styling */
         .unnes-logo-hero {
-            max-width: 100%;
-            height: auto;
-            max-height: 350px; /* Ukuran besar namun proporsional */
+            max-width: 100%; height: auto; max-height: 350px;
             filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.2));
             transition: transform 0.3s;
         }
@@ -93,18 +194,10 @@
         .feature-pill:hover { border-color: var(--primary); color: white; background: rgba(59, 130, 246, 0.1); }
         .feature-pill i { color: var(--primary); }
 
-        /* SCROLL DOWN INDICATOR */
         .scroll-down-btn {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: var(--text-muted);
-            font-size: 1.5rem;
-            cursor: pointer;
-            animation: bounce 2s infinite;
-            z-index: 10;
-            text-decoration: none;
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            color: var(--text-muted); font-size: 1.5rem; cursor: pointer;
+            animation: bounce 2s infinite; z-index: 10; text-decoration: none;
             display: flex; flex-direction: column; align-items: center; gap: 5px;
         }
         .scroll-down-btn span { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; }
@@ -116,133 +209,130 @@
             60% {transform: translateY(-5px) translateX(-50%);}
         }
 
-
-        /* --- COMPONENTS --- */
-
-        /* NAVBAR (TRANSPARENT ABSOLUTE) */
-        /* Agar navbar melayang di atas hero */
-        nav.navbar-custom {
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            z-index: 100;
-            background: transparent;
-            padding: 1.5rem 0;
-        }
-
-        /* Card Styling */
-        .tech-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        /* --- PIPELINE FLOW SECTION (ZIG-ZAG) --- */
+        .pipeline-section {
+            padding: 6rem 0;
+            border-bottom: 1px solid var(--border-color);
+            background-color: rgba(255,255,255,0.01);
             overflow: hidden;
         }
 
-        .card-header-tech {
-            background-color: rgba(255, 255, 255, 0.02);
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem 1.5rem;
-            font-size: 0.85rem;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            display: flex; align-items: center; gap: 10px;
-        }
-        .card-header-tech i { color: var(--primary); }
-
-        /* Inputs */
-        .form-control, .form-select {
-            background-color: var(--bg-input) !important;
-            border: 1px solid var(--border-color) !important;
-            color: var(--text-main) !important;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            border-radius: 8px;
-            padding: 0.6rem 1rem;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+        .pipeline-wrapper {
+            display: flex; flex-direction: column; position: relative; margin-top: 3rem; align-items: center;
         }
 
-        /* BUTTONS */
-        .btn-primary-tech {
-            background-color: var(--primary);
-            border: none;
-            color: white;
-            font-weight: 600;
-            padding: 12px 20px;
-            border-radius: 8px;
-            transition: all 0.2s;
-            width: 100%;
-        }
-        .btn-primary-tech:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-        .btn-primary-tech:active { transform: translateY(0); }
-
-        .btn-outline-tech {
-            background: transparent; border: 1px solid var(--border-color); color: var(--text-muted);
-            padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; transition: 0.2s;
-        }
-        .btn-outline-tech:hover { border-color: var(--text-muted); color: white; background: rgba(255,255,255,0.05); }
-
-        /* S-BOX VISUALIZER */
-        .grid-16 {
-            display: grid; grid-template-columns: repeat(16, 1fr);
-            gap: 2px; padding: 4px;
-            background: #000; border-radius: 8px; border: 1px solid var(--border-color);
-        }
-        .cell {
-            aspect-ratio: 1; border-radius: 1px; cursor: crosshair;
-        }
-        .cell:hover {
-            transform: scale(1.5); z-index: 10;
-            border: 1px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        .pipeline-wrapper::before {
+            content: ''; position: absolute; top: 0; left: 50%; width: 4px; height: 100%;
+            background: var(--border-color); transform: translateX(-50%); z-index: 0;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
         }
 
-        /* METRIC CARDS */
-        .metric-box {
-            background-color: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 10px; padding: 1rem;
-            height: 100%; display: flex; flex-direction: column; justify-content: center;
+        .pipeline-step {
+            position: relative; z-index: 1; width: 50%; padding: 0 40px;
+            margin-bottom: 4rem; display: flex; align-items: center;
         }
-        .m-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-        .m-val { font-size: 1.6rem; font-weight: 700; color: white; font-family: 'JetBrains Mono'; line-height: 1; margin-bottom: 6px;}
-        .m-target { font-size: 0.7rem; display: inline-block; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--text-muted); }
 
-        /* NAV PILLS */
-        .nav-pills .nav-link { color: var(--text-muted); font-weight: 500; border-radius: 8px; padding: 0.7rem 1.2rem; margin-right: 5px; }
-        .nav-pills .nav-link.active { background-color: rgba(59, 130, 246, 0.1); color: var(--primary); border: 1px solid var(--primary); }
-
-        /* TABLE */
-        .table-tech { --bs-table-bg: transparent; --bs-table-color: var(--text-main); border-color: var(--border-color); }
-        .table-tech th { text-transform: uppercase; font-size: 0.75rem; color: var(--text-muted); padding: 12px; font-weight: 600; }
-        .table-tech td { vertical-align: middle; padding: 12px; font-family: 'JetBrains Mono'; font-size: 0.9rem; }
-        .text-win { color: var(--success); font-weight: bold; }
-        .text-lose { color: var(--text-muted); opacity: 0.6; }
-
-        /* UTILS */
-        .hidden { display: none !important; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        .matrix-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 1px; width: 100px; margin: 0 auto; border: 1px solid #333; }
-        .bit { width: 100%; aspect-ratio: 1; font-size: 8px; display: flex; align-items: center; justify-content: center; color: #555; background: #000; }
-        .bit.active { background: var(--primary); color: white; }
-
-        /* LOADER */
-        #loader {
-            position: fixed; inset: 0; background: rgba(17, 17, 17, 0.9); z-index: 9999;
-            display: none; justify-content: center; align-items: center; flex-direction: column;
+        /* ODD Steps (Left) */
+        .pipeline-step:nth-child(odd) { align-self: flex-start; flex-direction: row-reverse; text-align: right; }
+        .pipeline-step:nth-child(odd)::after {
+            content: ''; position: absolute; top: 50%; right: 0;
+            width: 40px; height: 4px; background: var(--primary);
+            transform: translateY(-50%); z-index: -1; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
         }
-        .spinner { width: 40px; height: 40px; border: 3px solid var(--border-color); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s infinite linear; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* EVEN Steps (Right) */
+        .pipeline-step:nth-child(even) { align-self: flex-end; flex-direction: row; text-align: left; }
+        .pipeline-step:nth-child(even)::after {
+            content: ''; position: absolute; top: 50%; left: 0;
+            width: 40px; height: 4px; background: var(--primary);
+            transform: translateY(-50%); z-index: -1; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        .step-circle {
+            width: 60px; height: 60px; flex-shrink: 0;
+            background-color: var(--bg-card); border: 3px solid var(--primary);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-family: 'JetBrains Mono'; font-weight: bold; font-size: 1.2rem;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); transition: 0.3s; z-index: 2;
+        }
+        .pipeline-step:hover .step-circle {
+            transform: scale(1.15); background-color: var(--primary); box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+        }
+
+        .step-content {
+            background: var(--bg-input); border: 1px solid var(--border-color);
+            padding: 1.5rem; border-radius: 12px; flex-grow: 1; transition: 0.3s; position: relative;
+            min-height: 120px; display: flex; flex-direction: column; justify-content: center;
+        }
+        .pipeline-step:hover .step-content { border-color: var(--primary); transform: translateY(-5px); }
+
+        .pipeline-step:nth-child(odd) .step-content { margin-right: 2rem; }
+        .pipeline-step:nth-child(odd) .step-content::before {
+            content: ''; position: absolute; top: 50%; right: -10px;
+            transform: translateY(-50%) rotate(45deg); width: 20px; height: 20px; background: var(--bg-input);
+            border-right: 1px solid var(--border-color); border-top: 1px solid var(--border-color);
+        }
+        .pipeline-step:nth-child(odd):hover .step-content::before {
+             border-right-color: var(--primary); border-top-color: var(--primary);
+        }
+
+        .pipeline-step:nth-child(even) .step-content { margin-left: 2rem; }
+        .pipeline-step:nth-child(even) .step-content::before {
+            content: ''; position: absolute; top: 50%; left: -10px;
+            transform: translateY(-50%) rotate(-135deg); width: 20px; height: 20px; background: var(--bg-input);
+            border-right: 1px solid var(--border-color); border-top: 1px solid var(--border-color);
+        }
+        .pipeline-step:nth-child(even):hover .step-content::before {
+             border-right-color: var(--primary); border-top-color: var(--primary);
+        }
+
+        .step-title { color: white; font-size: 1rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px; }
+        .step-desc { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; }
+        .step-highlight { color: var(--primary); font-weight: bold; font-family: 'JetBrains Mono'; }
+
+        @media (max-width: 991px) {
+            .pipeline-wrapper::before { left: 30px; }
+            .pipeline-step {
+                width: 100%; padding: 0 0 0 70px; margin-bottom: 3rem;
+                align-self: flex-start !important; flex-direction: row !important; text-align: left !important;
+            }
+            .pipeline-step::after { display: none; }
+            .step-circle { margin-right: 1.5rem; position: absolute; left: 0; top: 0; }
+            .step-content { margin: 0 !important; min-height: auto; }
+            .step-content::before {
+                top: 30px !important; left: -10px !important; right: auto !important;
+                transform: rotate(-135deg) !important;
+            }
+        }
+
+        /* --- TEAM SECTION --- */
+        .team-section {
+            padding: 6rem 0; border-top: 1px solid var(--border-color);
+            background: linear-gradient(180deg, var(--bg-body) 0%, var(--bg-card) 100%);
+        }
+        .team-card {
+            background-color: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 12px; overflow: hidden; text-align: center;
+            transition: transform 0.3s ease, border-color 0.3s ease; height: 100%;
+        }
+        .team-card:hover {
+            transform: translateY(-8px); border-color: var(--primary);
+            box-shadow: 0 10px 20px -10px rgba(59, 130, 246, 0.3);
+        }
+        .team-card-img {
+            width: 100%; height: 300px; object-fit: cover;
+            object-position: center top; border-bottom: 1px solid var(--border-color);
+        }
+        .team-card-body { padding: 1.5rem; }
+        .team-name { font-size: 1.2rem; font-weight: 700; color: white; margin-bottom: 0.5rem; letter-spacing: 0.5px; }
+        .team-role { font-size: 0.9rem; color: var(--primary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px; }
+        .team-bio { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+
     </style>
 </head>
 <body>
+
+<canvas id="particle-canvas"></canvas>
 
 <nav class="navbar-custom">
     <div class="container d-flex justify-content-between align-items-center">
@@ -257,7 +347,7 @@
         </div>
         <div class="d-flex align-items-center gap-3">
              <button onclick="exportReport()" id="exportBtn" class="btn btn-outline-tech hidden"><i class="fas fa-file-export me-2"></i>Export Data</button>
-             <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2 rounded-pill">v6.6 Final</span>
+             <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2 rounded-pill">Cryptography</span>
         </div>
     </div>
 </nav>
@@ -266,21 +356,17 @@
     <div class="hero-bg-pattern"></div>
     <div class="container hero-content">
         <div class="row align-items-center g-5">
-
             <div class="col-lg-7 text-center text-lg-start">
                 <span class="badge rounded-pill border border-primary text-primary bg-primary bg-opacity-10 px-3 py-2 mb-3">
-                    <i class="fas fa-check-circle me-1"></i> Alamsyah et al.
+                    <i class="fas fa-check-circle me-1"></i> Paper by Alamsyah et al.
                 </span>
-
                 <h1 class="display-3 fw-bold text-white mb-3 tracking-tight">
-                    Advanced S-Box <span style="color: var(--primary);">Analysis</span> System
+                    AES S-Box <span style="color: var(--primary);">Analysis</span> System
                 </h1>
-
                 <p class="lead text-muted mb-4" style="font-weight: 300;">
                     Comprehensive cryptographic evaluation tool for Substitution Boxes.
                     Analyze Non-linearity, SAC, BIC, and Transparency Order with precision.
                 </p>
-
                 <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-2">
                     <div class="feature-pill"><i class="fas fa-university"></i> Universitas Negeri Semarang</div>
                     <div class="feature-pill"><i class="fas fa-microchip"></i> 10+ Metrics</div>
@@ -288,30 +374,142 @@
                     <div class="feature-pill"><i class="fas fa-lock"></i> CBC Image Test</div>
                 </div>
             </div>
-
             <div class="col-lg-5 text-center">
-                <img src="https://unnes.ac.id/lppm/wp-content/uploads/sites/16/2015/08/Logo-Transparan-Warna-1.png"
-                     alt="UNNES Logo"
-                     class="unnes-logo-hero">
+                <img src="https://unnes.ac.id/lppm/wp-content/uploads/sites/16/2015/08/Logo-Transparan-Warna-1.png" alt="UNNES Logo" class="unnes-logo-hero">
             </div>
-
         </div>
     </div>
-
-    <a href="#tool-section" class="scroll-down-btn">
-        <span>Start Analyzing</span>
+    <a href="#pipeline-section" class="scroll-down-btn">
+        <span>See Workflow</span>
         <i class="fas fa-chevron-down"></i>
     </a>
 </header>
 
-<div class="container mb-5" id="tool-section" style="padding-top: 2rem;">
-    <div class="row g-4">
+<section class="team-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">Meet Our Team</h6>
+            <h2 class="fw-bold text-white mb-3">Our Team Tim Kami</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">
+                Para pejuang yang selamat dalam peperangan melawan gempuran kriptografi.
+            </p>
+        </div>
 
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-6 col-lg-3">
+                <div class="team-card">
+                    <img src="/static/img/zuh.jpg" alt="Member Name" class="team-card-img">
+                    <div class="team-card-body">
+                        <h5 class="team-name">M. Mishbakhuz Zuhail</h5>
+                        <div class="team-role">Raja Kudus</div>
+                        <p class="team-bio">Andai gw bisa ngoding, pasti diajak projek sama zuh</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="team-card">
+                    <img src="/static/img/jeki.jpg" alt="Member Name" class="team-card-img">
+                    <div class="team-card-body">
+                        <h5 class="team-name">Ahmad Muzakki Ahsan</h5>
+                        <div class="team-role">Wali murid</div>
+                        <p class="team-bio">woy kuncir</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="team-card">
+                    <img src="/static/img/gweh.jpg" alt="Member Name" class="team-card-img">
+                    <div class="team-card-body">
+                        <h5 class="team-name">Sheva Aqila Ramadhan</h5>
+                        <div class="team-role">siv, shiv, qeel</div>
+                        <p class="team-bio">belajar menggambar demi bisa gambar myistri sepuasnya</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="pipeline-section" id="pipeline-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">Research Methodology</h6>
+            <h2 class="fw-bold text-white">Exploration Pipeline</h2>
+            <p class="text-muted small">Based on paper DOI: 10.1007/s11071-024-10414-3</p>
+        </div>
+
+        <div class="pipeline-wrapper">
+
+            <div class="pipeline-step">
+                <div class="step-circle">1</div>
+                <div class="step-content">
+                    <div class="step-title">Affine Matrix Space</div>
+                    <div class="step-desc">
+                        Menentukan matriks affine 8x8. Kombinasi bit ini membentuk ruang pencarian luas <span class="step-highlight">2⁶⁴</span>.
+                    </div>
+                </div>
+            </div>
+
+            <div class="pipeline-step">
+                <div class="step-circle">2</div>
+                <div class="step-content">
+                    <div class="step-title">Transformation</div>
+                    <div class="step-desc">
+                        Inverse pada GF(2⁸) dengan polinomial irreduksibel <span class="step-highlight">0x11B</span> + transformasi linear.
+                    </div>
+                </div>
+            </div>
+
+            <div class="pipeline-step">
+                <div class="step-circle">3</div>
+                <div class="step-content">
+                    <div class="step-title">S-Box Generation</div>
+                    <div class="step-desc">
+                        Setiap kombinasi matriks & konstanta menghasilkan tabel S-Box berisi 256 nilai unik (0-255).
+                    </div>
+                </div>
+            </div>
+
+            <div class="pipeline-step">
+                <div class="step-circle">4</div>
+                <div class="step-content">
+                    <div class="step-title">Validation</div>
+                    <div class="step-desc">
+                        Seleksi ketat. Hanya <span class="step-highlight">128 S-Box</span> yang memenuhi kriteria Balanced & Bijective yang lolos.
+                    </div>
+                </div>
+            </div>
+
+            <div class="pipeline-step">
+                <div class="step-circle">5</div>
+                <div class="step-content">
+                    <div class="step-title">Metric Suite</div>
+                    <div class="step-desc">
+                        Pengujian otomatis 10 metrik kriptografi: NL, SAC, BIC, Transparency Order, dll.
+                    </div>
+                </div>
+            </div>
+
+            <div class="pipeline-step">
+                <div class="step-circle">6</div>
+                <div class="step-content">
+                    <div class="step-title">Result (K44)</div>
+                    <div class="step-desc">
+                        Penentuan pemenang berdasarkan nilai terbaik. <span class="step-highlight">K44</span> terpilih sebagai kandidat terkuat.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<div class="container mb-5" id="tool-section" style="padding-top: 4rem;">
+    <div class="row g-4">
         <div class="col-lg-4" id="sidebarCol">
             <div class="tech-card h-100">
                 <div class="card-header-tech"><i class="fas fa-cog"></i> Configuration</div>
                 <div class="p-4">
-
                     <div class="mb-4">
                         <label class="small text-muted fw-bold mb-2">SELECT S-BOX</label>
                         <select id="jsonSelect" class="form-select" onchange="loadFromJSON()">
@@ -356,16 +554,12 @@
                         </div>
                     </div>
 
-                    <button onclick="analyze()" class="btn btn-primary-tech shadow-sm">
-                        ANALYZE NOW
-                    </button>
-
+                    <button onclick="analyze()" class="btn btn-primary-tech shadow-sm">ANALYZE NOW</button>
                 </div>
             </div>
         </div>
 
         <div class="col-lg-8" id="contentCol">
-
             <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
                 <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-metrics" onclick="toggleSidebar(true)">Dashboard</button></li>
                 <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-compare" onclick="toggleSidebar(false)">Comparison</button></li>
@@ -373,7 +567,6 @@
             </ul>
 
             <div class="tab-content">
-
                 <div class="tab-pane fade show active" id="tab-metrics">
                     <div id="welcomeState" class="text-center py-5 tech-card">
                         <div class="text-muted opacity-25 mb-3"><i class="fas fa-chart-pie fa-3x"></i></div>
@@ -501,27 +694,97 @@
     </div>
 </div>
 
+<footer class="py-4 text-center text-muted border-top border-dark" style="background: var(--bg-card); font-size: 0.85rem;">
+    <div class="container">
+        © 2025 Universitas Negeri Semarang. Cryptography Project.
+    </div>
+</footer>
+
+
 <div id="loader"><div class="spinner mb-3"></div><div class="text-white small fw-bold tracking-wide">PROCESSING</div></div>
+
+<script>
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let particlesArray;
+    let w, h;
+
+    // Set canvas size
+    function resizeCanvas() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+        initParticles();
+    });
+    resizeCanvas();
+
+    // Particle Class
+    class Particle {
+        constructor() {
+            this.x = Math.random() * w;
+            this.y = Math.random() * h;
+            this.size = Math.random() * 2 + 0.5; // Small random size
+            this.speedX = Math.random() * 0.5 - 0.25; // Slow horizontal
+            this.speedY = Math.random() * 0.5 - 0.25; // Slow vertical
+            this.opacity = Math.random() * 0.5 + 0.1; // Initial opacity
+        }
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+
+            // Wrap around screen
+            if (this.x > w) this.x = 0;
+            if (this.x < 0) this.x = w;
+            if (this.y > h) this.y = 0;
+            if (this.y < 0) this.y = h;
+        }
+        draw() {
+            ctx.fillStyle = `rgba(59, 130, 246, ${this.opacity})`; // Blueish color
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function initParticles() {
+        particlesArray = [];
+        const numberOfParticles = Math.floor((w * h) / 15000); // Density based on screen size
+        for (let i = 0; i < numberOfParticles; i++) {
+            particlesArray.push(new Particle());
+        }
+    }
+
+    function animateParticles() {
+        ctx.clearRect(0, 0, w, h);
+        for (let i = 0; i < particlesArray.length; i++) {
+            particlesArray[i].update();
+            particlesArray[i].draw();
+        }
+        requestAnimationFrame(animateParticles);
+    }
+
+    initParticles();
+    animateParticles();
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let sboxDatabase = [];
     let currentMetrics = null;
 
-    // --- INIT ---
     window.onload = async () => {
         try {
             const res = await fetch('/api/sbox_list');
             sboxDatabase = await res.json();
-
             const sel = document.getElementById('jsonSelect');
             const compA = document.getElementById('compSelectA');
             const compB = document.getElementById('compSelectB');
-
             sel.innerHTML = '<option value="" disabled selected>-- Select S-Box --</option>';
             compA.innerHTML = '<option value="" disabled selected>Select Reference</option>';
             compB.innerHTML = '<option value="" disabled selected>Select Candidate</option>';
-
             sboxDatabase.forEach(c => {
                 const opt = new Option(c.name, c.index);
                 sel.appendChild(opt);
@@ -543,14 +806,12 @@
         const idx = document.getElementById('jsonSelect').value;
         const res = await fetch(`/api/get_sbox/${idx}`);
         const data = await res.json();
-
         if(data.status === 'success') {
             document.getElementById('sboxInput').value = data.sbox.join(', ');
             renderGrid(data.sbox);
             const matDiv = document.getElementById('affineSection');
             if(data.matrix) { matDiv.classList.remove('hidden'); renderMatrix(data.matrix); }
             else { matDiv.classList.add('hidden'); }
-
             document.getElementById('results').classList.add('hidden');
             document.getElementById('welcomeState').classList.remove('hidden');
             document.getElementById('exportBtn').classList.add('hidden');
@@ -579,6 +840,10 @@
             const hue = 210 + (val / 255 * 30);
             const light = 20 + (val / 255 * 40);
             div.style.backgroundColor = `hsl(${hue}, 60%, ${light}%)`;
+
+            // Hex value inside grid
+            div.innerText = val.toString(16).toUpperCase().padStart(2, '0');
+
             div.onmouseenter = () => updateInspector(idx, val);
             grid.appendChild(div);
         });
@@ -604,11 +869,9 @@
         } catch { return null; }
     }
 
-    // --- ANALYZE ---
     async function analyze() {
         const sbox = getSbox();
         if(!sbox || sbox.length !== 256) { alert("S-Box must contain exactly 256 integers."); return; }
-
         document.getElementById('loader').style.display = 'flex';
         try {
             const res = await fetch('/api/analyze', {
@@ -617,17 +880,13 @@
             });
             const d = await res.json();
             document.getElementById('loader').style.display = 'none';
-
             if(d.status === 'success') {
                 currentMetrics = d.metrics;
-
                 document.getElementById('welcomeState').classList.add('hidden');
                 document.getElementById('results').classList.remove('hidden');
                 document.getElementById('exportBtn').classList.remove('hidden');
-
                 const m = d.metrics;
                 const txt = (id, v) => document.getElementById(id).innerText = v;
-
                 txt('resNL', m.NL); txt('resSAC', m.SAC.toFixed(4));
                 txt('resAD', m.AD); txt('resDU', m.DU);
                 txt('resBIC', m.BIC_NL); txt('resBICSAC', m.BIC_SAC.toFixed(4));
@@ -640,35 +899,28 @@
         } catch { document.getElementById('loader').style.display = 'none'; }
     }
 
-    // --- EXPORT ---
     function exportReport() {
         if(!currentMetrics) return;
         const timestamp = new Date().toISOString().replace(/[:.]/g,'-');
         const sboxName = document.getElementById('jsonSelect').options[document.getElementById('jsonSelect').selectedIndex]?.text || "Custom";
-
         let report = `S-BOX ANALYSIS REPORT\nGenerated: ${new Date().toLocaleString()}\nTarget: ${sboxName}\n-----------------------------\n`;
         const m = currentMetrics;
         report += `Nonlinearity     : ${m.NL}\nSAC              : ${m.SAC.toFixed(5)}\nBIC-NL           : ${m.BIC_NL}\nBIC-SAC          : ${m.BIC_SAC.toFixed(5)}\nDiff. Uniformity : ${m.DU}\nAlgebraic Degree : ${m.AD}\nTransparency Ord : ${m.TO.toFixed(5)}\nCorr. Immunity   : ${m.CI}\nLAP (Bias)       : ${m.LAP.toFixed(5)}\nDAP (Diff Prob)  : ${m.DAP.toFixed(5)}\nFixed Points     : ${m.FIXED}\nMax Cycle Length : ${m.CYC_MAX}\n-----------------------------\nSTRENGTH VALUE (SV) : ${m.SV_PAPER.toFixed(6)}\n`;
-
         const blob = new Blob([report], {type: 'text/plain'});
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = `Report_${sboxName.replace(/\s+/g,'_')}_${timestamp}.txt`; a.click(); window.URL.revokeObjectURL(url);
     }
 
-    // --- COMPARISON ---
     async function runComparison() {
         const idxA = document.getElementById('compSelectA').value;
         const idxB = document.getElementById('compSelectB').value;
         if(!idxA || !idxB) { alert("Select both S-Boxes!"); return; }
-
         document.getElementById('loader').style.display = 'flex';
         try {
             const resA = await fetch(`/api/get_sbox/${idxA}`); const dataA = await resA.json();
             const resB = await fetch(`/api/get_sbox/${idxB}`); const dataB = await resB.json();
-
             const metA = await (await fetch('/api/analyze', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({sbox: dataA.sbox}) })).json();
             const metB = await (await fetch('/api/analyze', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({sbox: dataB.sbox}) })).json();
-
             generateCompTable(metA.metrics, metB.metrics);
         } catch(e) { alert("Error comparing"); }
         finally { document.getElementById('loader').style.display = 'none'; }
@@ -677,7 +929,6 @@
     function generateCompTable(mA, mB) {
         const tbody = document.getElementById('comparisonTableBody');
         tbody.innerHTML = '';
-
         const metrics = [
             { id: 'NL', name: 'Nonlinearity', targetVal: 112, better: 'higher' },
             { id: 'SAC', name: 'SAC', targetVal: 0.5, better: 'closer' },
@@ -690,25 +941,20 @@
             { id: 'FIXED', name: 'Fixed Points', better: 'lower' },
             { id: 'CYC_MAX', name: 'Max Cycle', better: 'higher' }
         ];
-
         metrics.forEach(m => {
             const vA = mA[m.id];
             const vB = mB[m.id];
             let winner = '-';
             let classA = ''; let classB = '';
-
             const fmt = (v) => Number.isInteger(v) ? v : Number(v).toFixed(4).replace(/\.0000$/, '');
-
             if (vA !== vB) {
                 let isAWin = false;
                 if(m.better === 'higher') isAWin = vA > vB;
                 else if(m.better === 'lower') isAWin = vA < vB;
                 else if(m.better === 'closer') isAWin = Math.abs(vA - m.targetVal) < Math.abs(vB - m.targetVal);
-
                 if (isAWin) { winner = 'Ref (A)'; classA = 'text-win'; classB = 'text-lose'; }
                 else { winner = 'Cand (B)'; classB = 'text-win'; classA = 'text-lose'; }
             } else winner = 'Tie';
-
             const row = `
                 <tr>
                     <td class="fw-bold text-muted small text-uppercase">${m.name}</td>
@@ -721,7 +967,6 @@
         });
     }
 
-    // --- CRYPTO ---
     function moveResult() {
         const res = document.getElementById('txtResult').value;
         if(res) { document.getElementById('txtInput').value = res; document.getElementById('txtResult').value = ""; }
@@ -729,9 +974,7 @@
 
     async function doText(mode) {
         const sbox = getSbox();
-        // VALIDASI TAMBAHAN
         if(!sbox || sbox.length !== 256) return alert("Error: Please select a valid S-Box first (must be 256 numbers).");
-
         const txt = document.getElementById('txtInput').value; if(!txt) return alert("Input empty!");
         const res = await fetch('/api/process_text', {
             method: 'POST', headers: {'Content-Type':'application/json'},
@@ -744,9 +987,7 @@
 
     async function doImage(mode) {
         const sbox = getSbox();
-        // VALIDASI TAMBAHAN
         if(!sbox || sbox.length !== 256) return alert("Error: Please select a valid S-Box first (must be 256 numbers).");
-
         const file = document.getElementById('imgInput').files[0]; if(!file) return alert("Upload image!");
         const fd = new FormData();
         fd.append('image', file); fd.append('sbox', sbox.join(',')); fd.append('mode', mode);
