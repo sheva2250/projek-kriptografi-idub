@@ -11,21 +11,21 @@
 
     <style>
         :root {
-            /* THEME: Modern Minimalist Grey */
-            --bg-body: #111111;
-            --bg-card: #1a1a1a;
-            --bg-input: #252525;
+            /* THEME: Deep Space Grey */
+            --bg-body: #0b0c10;
+            --bg-card: #1f2833;
+            --bg-input: #121212;
             --border-color: #333333;
 
             /* ACCENT COLORS */
-            --primary: #3b82f6;        /* Royal Blue */
-            --primary-hover: #2563eb;
+            --primary: #66fcf1;        /* Cyan Neon (Space Tech) */
+            --primary-hover: #45a29e;
             --success: #10b981;
             --danger: #ef4444;
 
             /* TEXT */
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
+            --text-main: #c5c6c7;
+            --text-muted: #8892b0;
         }
 
         html { scroll-behavior: smooth; }
@@ -37,19 +37,22 @@
             min-height: 100vh;
             margin: 0; padding: 0;
             overflow-x: hidden;
-            position: relative; /* For canvas positioning */
+            position: relative;
         }
 
-        /* --- BACKGROUND ANIMATION CANVAS --- */
-        #particle-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1; /* Place behind everything */
-            pointer-events: none; /* Allow clicking through */
-            opacity: 0.6; /* Subtle effect */
+        /* --- CONSTELLATION CANVAS --- */
+        #constellation-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; pointer-events: none;
+            background: radial-gradient(circle at bottom, #1b2735 0%, #090a0f 100%);
+        }
+
+        /* --- GLOBAL ANIMATIONS (SCROLL REVEAL) --- */
+        .reveal {
+            opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1; transform: translateY(0);
         }
 
         /* --- COMPONENTS --- */
@@ -59,10 +62,11 @@
         }
 
         .tech-card {
-            background-color: var(--bg-card);
+            background-color: rgba(31, 40, 51, 0.8);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
 
@@ -85,17 +89,17 @@
         }
         .form-control:focus, .form-select:focus {
             border-color: var(--primary) !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+            box-shadow: 0 0 0 3px rgba(102, 252, 241, 0.15) !important;
         }
 
         .btn-primary-tech {
-            background-color: var(--primary); border: none; color: white;
-            font-weight: 600; padding: 12px 20px; border-radius: 8px;
+            background-color: var(--primary); border: none; color: #0b0c10;
+            font-weight: 700; padding: 12px 20px; border-radius: 8px;
             transition: all 0.2s; width: 100%;
         }
         .btn-primary-tech:hover {
             background-color: var(--primary-hover); transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 15px rgba(102, 252, 241, 0.4);
         }
         .btn-primary-tech:active { transform: translateY(0); }
 
@@ -103,7 +107,7 @@
             background: transparent; border: 1px solid var(--border-color); color: var(--text-muted);
             padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; transition: 0.2s;
         }
-        .btn-outline-tech:hover { border-color: var(--text-muted); color: white; background: rgba(255,255,255,0.05); }
+        .btn-outline-tech:hover { border-color: var(--primary); color: var(--primary); background: rgba(102, 252, 241, 0.05); }
 
         /* S-BOX VISUALIZER */
         .grid-16 {
@@ -120,7 +124,7 @@
         }
         .cell:hover {
             transform: scale(1.5); z-index: 10;
-            border: 1px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            border: 1px solid var(--primary); box-shadow: 0 0 15px var(--primary);
             color: white;
         }
 
@@ -135,7 +139,7 @@
         .m-target { font-size: 0.7rem; display: inline-block; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--text-muted); }
 
         .nav-pills .nav-link { color: var(--text-muted); font-weight: 500; border-radius: 8px; padding: 0.7rem 1.2rem; margin-right: 5px; }
-        .nav-pills .nav-link.active { background-color: rgba(59, 130, 246, 0.1); color: var(--primary); border: 1px solid var(--primary); }
+        .nav-pills .nav-link.active { background-color: rgba(102, 252, 241, 0.1); color: var(--primary); border: 1px solid var(--primary); }
 
         .table-tech { --bs-table-bg: transparent; --bs-table-color: var(--text-main); border-color: var(--border-color); }
         .table-tech th { text-transform: uppercase; font-size: 0.75rem; color: var(--text-muted); padding: 12px; font-weight: 600; }
@@ -147,10 +151,10 @@
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         .matrix-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 1px; width: 100px; margin: 0 auto; border: 1px solid #333; }
         .bit { width: 100%; aspect-ratio: 1; font-size: 8px; display: flex; align-items: center; justify-content: center; color: #555; background: #000; }
-        .bit.active { background: var(--primary); color: white; }
+        .bit.active { background: var(--primary); color: black; font-weight: bold; }
 
         #loader {
-            position: fixed; inset: 0; background: rgba(17, 17, 17, 0.9); z-index: 9999;
+            position: fixed; inset: 0; background: rgba(11, 12, 16, 0.9); z-index: 9999;
             display: none; justify-content: center; align-items: center; flex-direction: column;
         }
         .spinner { width: 40px; height: 40px; border: 3px solid var(--border-color); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s infinite linear; }
@@ -159,29 +163,84 @@
         /* --- HERO SECTION --- */
         .hero-section {
             min-height: 100vh; width: 100%;
-            /* Background gradient is now transparent at top to show particles, solid at bottom */
-            background: linear-gradient(180deg, rgba(26,26,26,0.7) 0%, var(--bg-body) 100%);
+            background: transparent;
             border-bottom: 1px solid var(--border-color);
             position: relative; overflow: hidden;
             display: flex; align-items: center; justify-content: center;
             flex-direction: column; padding-top: 60px;
         }
 
-        /* Grid pattern made lighter for particles */
-        .hero-bg-pattern {
-            position: absolute; inset: 0;
-            background-image: radial-gradient(#ffffff 1px, transparent 1px);
-            background-size: 30px 30px; opacity: 0.02; z-index: 0;
-        }
-
         .hero-content { position: relative; z-index: 1; width: 100%; }
 
+        /* --- ORBITAL LOGO ANIMATION (NEW) --- */
+        .logo-orbit-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 420px; /* Lebar area orbit */
+            height: 420px;
+            margin: 0 auto;
+        }
+
         .unnes-logo-hero {
-            max-width: 100%; height: auto; max-height: 350px;
-            filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.2));
+            position: relative;
+            z-index: 10;
+            max-height: 280px; /* Ukuran logo di dalam orbit */
+            width: auto;
+            filter: drop-shadow(0 0 40px rgba(102, 252, 241, 0.4));
             transition: transform 0.3s;
         }
-        .unnes-logo-hero:hover { transform: scale(1.02); }
+        .unnes-logo-hero:hover { transform: scale(1.05); }
+
+        .orbit {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* Inner Ring */
+        .orbit-1 {
+            width: 320px; height: 320px;
+            border: 1px solid rgba(102, 252, 241, 0.3);
+            border-top-color: transparent;
+            border-left-color: transparent;
+            animation: spin-cw 12s linear infinite;
+        }
+
+        /* Middle Dashed Ring */
+        .orbit-2 {
+            width: 360px; height: 360px;
+            border: 1px dashed rgba(102, 252, 241, 0.2);
+            animation: spin-ccw 25s linear infinite;
+        }
+
+        /* Outer Ring with Planet */
+        .orbit-3 {
+            width: 400px; height: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            animation: spin-cw 20s linear infinite;
+        }
+        .orbit-3::after {
+            content: '';
+            position: absolute;
+            top: 50px; left: 50px;
+            width: 8px; height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        @keyframes spin-cw { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes spin-ccw { from { transform: translate(-50%, -50%) rotate(360deg); } to { transform: translate(-50%, -50%) rotate(0deg); } }
+
+        /* Mobile Adjustment for Orbit */
+        @media (max-width: 991px) {
+            .logo-orbit-wrapper { transform: scale(0.7); margin-top: -40px; margin-bottom: -40px; }
+        }
+
 
         .feature-pill {
             display: inline-flex; align-items: center; gap: 8px;
@@ -190,8 +249,9 @@
             padding: 8px 16px; border-radius: 50px;
             font-size: 0.85rem; color: var(--text-muted);
             margin-right: 8px; margin-bottom: 8px; transition: 0.3s;
+            backdrop-filter: blur(5px);
         }
-        .feature-pill:hover { border-color: var(--primary); color: white; background: rgba(59, 130, 246, 0.1); }
+        .feature-pill:hover { border-color: var(--primary); color: white; background: rgba(102, 252, 241, 0.1); }
         .feature-pill i { color: var(--primary); }
 
         .scroll-down-btn {
@@ -209,11 +269,63 @@
             60% {transform: translateY(-5px) translateX(-50%);}
         }
 
+        /* --- ABSTRACT SECTION --- */
+        .abstract-section {
+            padding: 8rem 0;
+            position: relative;
+            background: transparent;
+        }
+
+        .abstract-card {
+            background: rgba(31, 40, 51, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 3rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .abstract-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+
+        .section-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(102, 252, 241, 0.3);
+            padding: 6px 12px;
+            border-radius: 4px;
+        }
+
+        .abstract-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .abstract-text {
+            font-size: 1.05rem;
+            color: #c5c6c7;
+            line-height: 1.8;
+            margin-bottom: 0;
+        }
+
         /* --- PIPELINE FLOW SECTION (ZIG-ZAG) --- */
         .pipeline-section {
             padding: 6rem 0;
             border-bottom: 1px solid var(--border-color);
-            background-color: rgba(255,255,255,0.01);
+            background-color: rgba(0,0,0,0.2);
             overflow: hidden;
         }
 
@@ -222,9 +334,8 @@
         }
 
         .pipeline-wrapper::before {
-            content: ''; position: absolute; top: 0; left: 50%; width: 4px; height: 100%;
-            background: var(--border-color); transform: translateX(-50%); z-index: 0;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
+            content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 100%;
+            background: rgba(255,255,255,0.1); transform: translateX(-50%); z-index: 0;
         }
 
         .pipeline-step {
@@ -232,59 +343,42 @@
             margin-bottom: 4rem; display: flex; align-items: center;
         }
 
-        /* ODD Steps (Left) */
         .pipeline-step:nth-child(odd) { align-self: flex-start; flex-direction: row-reverse; text-align: right; }
         .pipeline-step:nth-child(odd)::after {
             content: ''; position: absolute; top: 50%; right: 0;
-            width: 40px; height: 4px; background: var(--primary);
-            transform: translateY(-50%); z-index: -1; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            width: 40px; height: 2px; background: var(--primary);
+            transform: translateY(-50%); z-index: -1; box-shadow: 0 0 10px var(--primary);
         }
 
-        /* EVEN Steps (Right) */
         .pipeline-step:nth-child(even) { align-self: flex-end; flex-direction: row; text-align: left; }
         .pipeline-step:nth-child(even)::after {
             content: ''; position: absolute; top: 50%; left: 0;
-            width: 40px; height: 4px; background: var(--primary);
-            transform: translateY(-50%); z-index: -1; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            width: 40px; height: 2px; background: var(--primary);
+            transform: translateY(-50%); z-index: -1; box-shadow: 0 0 10px var(--primary);
         }
 
         .step-circle {
             width: 60px; height: 60px; flex-shrink: 0;
-            background-color: var(--bg-card); border: 3px solid var(--primary);
+            background-color: var(--bg-body); border: 2px solid var(--primary);
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: white; font-family: 'JetBrains Mono'; font-weight: bold; font-size: 1.2rem;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); transition: 0.3s; z-index: 2;
+            color: var(--primary); font-family: 'JetBrains Mono'; font-weight: bold; font-size: 1.2rem;
+            box-shadow: 0 0 15px rgba(102, 252, 241, 0.2); transition: 0.3s; z-index: 2;
         }
         .pipeline-step:hover .step-circle {
-            transform: scale(1.15); background-color: var(--primary); box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+            transform: scale(1.15); background-color: var(--primary); color: black;
+            box-shadow: 0 0 30px rgba(102, 252, 241, 0.6);
         }
 
         .step-content {
-            background: var(--bg-input); border: 1px solid var(--border-color);
+            background: rgba(31, 40, 51, 0.7); border: 1px solid var(--border-color);
             padding: 1.5rem; border-radius: 12px; flex-grow: 1; transition: 0.3s; position: relative;
             min-height: 120px; display: flex; flex-direction: column; justify-content: center;
+            backdrop-filter: blur(5px);
         }
         .pipeline-step:hover .step-content { border-color: var(--primary); transform: translateY(-5px); }
 
         .pipeline-step:nth-child(odd) .step-content { margin-right: 2rem; }
-        .pipeline-step:nth-child(odd) .step-content::before {
-            content: ''; position: absolute; top: 50%; right: -10px;
-            transform: translateY(-50%) rotate(45deg); width: 20px; height: 20px; background: var(--bg-input);
-            border-right: 1px solid var(--border-color); border-top: 1px solid var(--border-color);
-        }
-        .pipeline-step:nth-child(odd):hover .step-content::before {
-             border-right-color: var(--primary); border-top-color: var(--primary);
-        }
-
         .pipeline-step:nth-child(even) .step-content { margin-left: 2rem; }
-        .pipeline-step:nth-child(even) .step-content::before {
-            content: ''; position: absolute; top: 50%; left: -10px;
-            transform: translateY(-50%) rotate(-135deg); width: 20px; height: 20px; background: var(--bg-input);
-            border-right: 1px solid var(--border-color); border-top: 1px solid var(--border-color);
-        }
-        .pipeline-step:nth-child(even):hover .step-content::before {
-             border-right-color: var(--primary); border-top-color: var(--primary);
-        }
 
         .step-title { color: white; font-size: 1rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px; }
         .step-desc { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; }
@@ -299,25 +393,22 @@
             .pipeline-step::after { display: none; }
             .step-circle { margin-right: 1.5rem; position: absolute; left: 0; top: 0; }
             .step-content { margin: 0 !important; min-height: auto; }
-            .step-content::before {
-                top: 30px !important; left: -10px !important; right: auto !important;
-                transform: rotate(-135deg) !important;
-            }
         }
 
         /* --- TEAM SECTION --- */
         .team-section {
             padding: 6rem 0; border-top: 1px solid var(--border-color);
-            background: linear-gradient(180deg, var(--bg-body) 0%, var(--bg-card) 100%);
+            background: rgba(0,0,0,0.3);
         }
         .team-card {
-            background-color: var(--bg-card); border: 1px solid var(--border-color);
+            background-color: rgba(31, 40, 51, 0.5); border: 1px solid var(--border-color);
             border-radius: 12px; overflow: hidden; text-align: center;
             transition: transform 0.3s ease, border-color 0.3s ease; height: 100%;
+            backdrop-filter: blur(5px);
         }
         .team-card:hover {
             transform: translateY(-8px); border-color: var(--primary);
-            box-shadow: 0 10px 20px -10px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 10px 20px -10px rgba(102, 252, 241, 0.2);
         }
         .team-card-img {
             width: 100%; height: 300px; object-fit: cover;
@@ -332,12 +423,12 @@
 </head>
 <body>
 
-<canvas id="particle-canvas"></canvas>
+<canvas id="constellation-canvas"></canvas>
 
 <nav class="navbar-custom">
     <div class="container d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-3">
-            <div style="width:36px; height:36px; background: var(--primary); border-radius: 8px; display:grid; place-items:center; color:white;">
+            <div style="width:36px; height:36px; background: var(--primary); border-radius: 8px; display:grid; place-items:center; color: #0b0c10;">
                 <i class="fas fa-cube"></i>
             </div>
             <div style="line-height: 1.2;">
@@ -347,7 +438,7 @@
         </div>
         <div class="d-flex align-items-center gap-3">
              <button onclick="exportReport()" id="exportBtn" class="btn btn-outline-tech hidden"><i class="fas fa-file-export me-2"></i>Export Data</button>
-             <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2 rounded-pill">Cryptography</span>
+             <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2 rounded-pill">Cryptography Project</span>
         </div>
     </div>
 </nav>
@@ -356,7 +447,7 @@
     <div class="hero-bg-pattern"></div>
     <div class="container hero-content">
         <div class="row align-items-center g-5">
-            <div class="col-lg-7 text-center text-lg-start">
+            <div class="col-lg-7 text-center text-lg-start reveal">
                 <span class="badge rounded-pill border border-primary text-primary bg-primary bg-opacity-10 px-3 py-2 mb-3">
                     <i class="fas fa-check-circle me-1"></i> Paper by Alamsyah et al.
                 </span>
@@ -374,24 +465,57 @@
                     <div class="feature-pill"><i class="fas fa-lock"></i> CBC Image Test</div>
                 </div>
             </div>
-            <div class="col-lg-5 text-center">
-                <img src="https://unnes.ac.id/lppm/wp-content/uploads/sites/16/2015/08/Logo-Transparan-Warna-1.png" alt="UNNES Logo" class="unnes-logo-hero">
+            <div class="col-lg-5 text-center reveal">
+                <div class="logo-orbit-wrapper">
+                    <div class="orbit orbit-1"></div>
+                    <div class="orbit orbit-2"></div>
+                    <div class="orbit orbit-3"></div>
+
+                    <img src="https://unnes.ac.id/lppm/wp-content/uploads/sites/16/2015/08/Logo-Transparan-Warna-1.png" alt="UNNES Logo" class="unnes-logo-hero">
+                </div>
             </div>
         </div>
     </div>
-    <a href="#pipeline-section" class="scroll-down-btn">
-        <span>See Workflow</span>
+    <a href="#abstract-section" class="scroll-down-btn">
+        <span>Explore Research</span>
         <i class="fas fa-chevron-down"></i>
     </a>
 </header>
 
-<section class="team-section">
+<section class="abstract-section reveal" id="abstract-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="abstract-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <span class="section-badge"><i class="fas fa-microscope me-2"></i>Research Overview</span>
+                            <h2 class="abstract-title">Navigating the <span style="color: var(--primary)">Chaos</span>.</h2>
+                            <p class="abstract-text">
+                                The standard AES S-Box is robust, but is it unique? This research delves into the <strong class="text-white">Affine Transformation</strong> space, a mathematical cosmos of <strong class="text-white">2⁶⁴ possibilities</strong>.
+                            </p>
+                            <br>
+                            <p class="abstract-text">
+                                By systematically generating and filtering millions of candidates against strict cryptographic properties (Bijective, Balanced, Nonlinearity), we isolate <strong>S-Box K44</strong>—a rare variant that rivals AES in strength while offering distinct structural advantages for modern encryption standards.
+                            </p>
+                        </div>
+                        <div class="col-md-5 text-center d-none d-md-block">
+                            <i class="fas fa-atom fa-10x" style="color: rgba(102, 252, 241, 0.1); filter: drop-shadow(0 0 20px var(--primary));"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="team-section reveal">
     <div class="container">
         <div class="text-center mb-5">
-            <h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">Meet Our Team</h6>
-            <h2 class="fw-bold text-white mb-3">Our Team Tim Kami</h2>
+            <h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">Meet The Explorers</h6>
+            <h2 class="fw-bold text-white mb-3">Our Team</h2>
             <p class="text-muted mx-auto" style="max-width: 600px;">
-                Para pejuang yang selamat dalam peperangan melawan gempuran kriptografi.
+                Para pejuang yang selamat dari mata kuliah kriptografi
             </p>
         </div>
 
@@ -401,7 +525,7 @@
                     <img src="/static/img/zuh.jpg" alt="Member Name" class="team-card-img">
                     <div class="team-card-body">
                         <h5 class="team-name">M. Mishbakhuz Zuhail</h5>
-                        <div class="team-role">Raja Kudus</div>
+                        <div class="team-role">SI BALINAN</div>
                         <p class="team-bio">Andai gw bisa ngoding, pasti diajak projek sama zuh</p>
                     </div>
                 </div>
@@ -411,7 +535,7 @@
                     <img src="/static/img/jeki.jpg" alt="Member Name" class="team-card-img">
                     <div class="team-card-body">
                         <h5 class="team-name">Ahmad Muzakki Ahsan</h5>
-                        <div class="team-role">Wali murid</div>
+                        <div class="team-role">WALI MURID</div>
                         <p class="team-bio">woy kuncir</p>
                     </div>
                 </div>
@@ -421,7 +545,7 @@
                     <img src="/static/img/gweh.jpg" alt="Member Name" class="team-card-img">
                     <div class="team-card-body">
                         <h5 class="team-name">Sheva Aqila Ramadhan</h5>
-                        <div class="team-role">siv, shiv, qeel</div>
+                        <div class="team-role">MC</div>
                         <p class="team-bio">belajar menggambar demi bisa gambar myistri sepuasnya</p>
                     </div>
                 </div>
@@ -430,16 +554,15 @@
     </div>
 </section>
 
-<section class="pipeline-section" id="pipeline-section">
+<section class="pipeline-section reveal" id="pipeline-section">
     <div class="container">
         <div class="text-center mb-5">
-            <h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">Research Methodology</h6>
+            <h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">Methodology</h6>
             <h2 class="fw-bold text-white">Exploration Pipeline</h2>
             <p class="text-muted small">Based on paper DOI: 10.1007/s11071-024-10414-3</p>
         </div>
 
         <div class="pipeline-wrapper">
-
             <div class="pipeline-step">
                 <div class="step-circle">1</div>
                 <div class="step-content">
@@ -449,7 +572,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="pipeline-step">
                 <div class="step-circle">2</div>
                 <div class="step-content">
@@ -459,7 +581,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="pipeline-step">
                 <div class="step-circle">3</div>
                 <div class="step-content">
@@ -469,7 +590,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="pipeline-step">
                 <div class="step-circle">4</div>
                 <div class="step-content">
@@ -479,7 +599,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="pipeline-step">
                 <div class="step-circle">5</div>
                 <div class="step-content">
@@ -489,7 +608,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="pipeline-step">
                 <div class="step-circle">6</div>
                 <div class="step-content">
@@ -499,12 +617,11 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </section>
 
-<div class="container mb-5" id="tool-section" style="padding-top: 4rem;">
+<div class="container mb-5 reveal" id="tool-section" style="padding-top: 4rem;">
     <div class="row g-4">
         <div class="col-lg-4" id="sidebarCol">
             <div class="tech-card h-100">
@@ -694,9 +811,9 @@
     </div>
 </div>
 
-<footer class="py-4 text-center text-muted border-top border-dark" style="background: var(--bg-card); font-size: 0.85rem;">
+<footer class="py-4 text-center text-muted border-top border-dark" style="background: rgba(31, 40, 51, 0.9); font-size: 0.85rem;">
     <div class="container">
-        © 2025 Universitas Negeri Semarang. Cryptography Project.
+        © 2025 Universitas Negeri Semarang. Cryptography Research Project.
     </div>
 </footer>
 
@@ -704,70 +821,79 @@
 <div id="loader"><div class="spinner mb-3"></div><div class="text-white small fw-bold tracking-wide">PROCESSING</div></div>
 
 <script>
-    const canvas = document.getElementById('particle-canvas');
+    const canvas = document.getElementById('constellation-canvas');
     const ctx = canvas.getContext('2d');
-
-    let particlesArray;
+    let stars = [];
     let w, h;
 
-    // Set canvas size
-    function resizeCanvas() {
+    function resize() {
         w = canvas.width = window.innerWidth;
         h = canvas.height = window.innerHeight;
     }
-    window.addEventListener('resize', () => {
-        resizeCanvas();
-        initParticles();
-    });
-    resizeCanvas();
+    window.addEventListener('resize', () => { resize(); initStars(); });
+    resize();
 
-    // Particle Class
-    class Particle {
+    class Star {
         constructor() {
             this.x = Math.random() * w;
             this.y = Math.random() * h;
-            this.size = Math.random() * 2 + 0.5; // Small random size
-            this.speedX = Math.random() * 0.5 - 0.25; // Slow horizontal
-            this.speedY = Math.random() * 0.5 - 0.25; // Slow vertical
-            this.opacity = Math.random() * 0.5 + 0.1; // Initial opacity
+            this.vx = (Math.random() - 0.5) * 0.5; // Kecepatan pelan
+            this.vy = (Math.random() - 0.5) * 0.5;
+            this.size = Math.random() * 2;
         }
         update() {
-            this.x += this.speedX;
-            this.y += this.speedY;
-
-            // Wrap around screen
-            if (this.x > w) this.x = 0;
-            if (this.x < 0) this.x = w;
-            if (this.y > h) this.y = 0;
-            if (this.y < 0) this.y = h;
+            this.x += this.vx; this.y += this.vy;
+            if(this.x < 0 || this.x > w) this.vx *= -1;
+            if(this.y < 0 || this.y > h) this.vy *= -1;
         }
         draw() {
-            ctx.fillStyle = `rgba(59, 130, 246, ${this.opacity})`; // Blueish color
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
         }
     }
 
-    function initParticles() {
-        particlesArray = [];
-        const numberOfParticles = Math.floor((w * h) / 15000); // Density based on screen size
-        for (let i = 0; i < numberOfParticles; i++) {
-            particlesArray.push(new Particle());
-        }
+    function initStars() {
+        stars = [];
+        const count = Math.floor((w * h) / 10000); // Kepadatan bintang
+        for(let i=0; i<count; i++) stars.push(new Star());
     }
 
-    function animateParticles() {
+    function animate() {
         ctx.clearRect(0, 0, w, h);
-        for (let i = 0; i < particlesArray.length; i++) {
-            particlesArray[i].update();
-            particlesArray[i].draw();
+
+        // Draw Connections
+        for(let i=0; i<stars.length; i++) {
+            stars[i].update();
+            stars[i].draw();
+
+            for(let j=i+1; j<stars.length; j++) {
+                let dx = stars[i].x - stars[j].x;
+                let dy = stars[i].y - stars[j].y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+
+                if(dist < 100) { // Jarak koneksi
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(102, 252, 241, ${1 - dist/100})`; // Fade out line
+                    ctx.lineWidth = 0.5;
+                    ctx.moveTo(stars[i].x, stars[i].y);
+                    ctx.lineTo(stars[j].x, stars[j].y);
+                    ctx.stroke();
+                }
+            }
         }
-        requestAnimationFrame(animateParticles);
+        requestAnimationFrame(animate);
     }
 
-    initParticles();
-    animateParticles();
+    initStars();
+    animate();
+
+    // Scroll Reveal Logic
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('active');
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -837,7 +963,7 @@
         arr.forEach((val, idx) => {
             const div = document.createElement('div');
             div.className = 'cell';
-            const hue = 210 + (val / 255 * 30);
+            const hue = 180 + (val / 255 * 30); /* Cyan based hue */
             const light = 20 + (val / 255 * 40);
             div.style.backgroundColor = `hsl(${hue}, 60%, ${light}%)`;
 
