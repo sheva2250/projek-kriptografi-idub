@@ -18,7 +18,7 @@
             --border-color: #333333;
 
             /* ACCENT COLORS */
-            --primary: #66fcf1;        /* Cyan Neon (Space Tech) */
+            --primary: #66fcf1;        /* Cyan Neon */
             --primary-hover: #45a29e;
             --success: #10b981;
             --danger: #ef4444;
@@ -47,19 +47,12 @@
             background: radial-gradient(circle at bottom, #1b2735 0%, #090a0f 100%);
         }
 
-        /* --- GLOBAL ANIMATIONS (SCROLL REVEAL) --- */
-        .reveal {
-            opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out;
-        }
-        .reveal.active {
-            opacity: 1; transform: translateY(0);
-        }
+        /* --- GLOBAL ANIMATIONS --- */
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
 
         /* --- COMPONENTS --- */
-        nav.navbar-custom {
-            position: absolute; top: 0; left: 0; right: 0; z-index: 100;
-            background: transparent; padding: 1.5rem 0;
-        }
+        nav.navbar-custom { position: absolute; top: 0; left: 0; right: 0; z-index: 100; background: transparent; padding: 1.5rem 0; }
 
         .tech-card {
             background-color: rgba(31, 40, 51, 0.8);
@@ -108,6 +101,7 @@
             padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; transition: 0.2s;
         }
         .btn-outline-tech:hover { border-color: var(--primary); color: var(--primary); background: rgba(102, 252, 241, 0.05); }
+        .btn-outline-tech.active { background: var(--primary); color: #0b0c10; border-color: var(--primary); }
 
         /* S-BOX VISUALIZER */
         .grid-16 {
@@ -126,6 +120,34 @@
             transform: scale(1.5); z-index: 10;
             border: 1px solid var(--primary); box-shadow: 0 0 15px var(--primary);
             color: white;
+        }
+
+        /* --- CUSTOM MATRIX INPUT STYLES (NEW) --- */
+        .affine-grid-input {
+            display: grid; grid-template-columns: repeat(8, 1fr);
+            gap: 4px; margin-bottom: 1rem;
+        }
+        .constant-grid-input {
+            display: grid; grid-template-columns: repeat(8, 1fr);
+            gap: 4px; margin-bottom: 1.5rem;
+        }
+        .bit-btn {
+            aspect-ratio: 1;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; color: #555;
+        }
+        .bit-btn:hover { border-color: var(--primary); }
+        .bit-btn.active {
+            background: var(--primary);
+            color: #0b0c10;
+            font-weight: bold;
+            box-shadow: 0 0 8px rgba(102, 252, 241, 0.5);
+            border-color: var(--primary);
         }
 
         .metric-box {
@@ -162,94 +184,36 @@
 
         /* --- HERO SECTION --- */
         .hero-section {
-            min-height: 100vh; width: 100%;
-            background: transparent;
-            border-bottom: 1px solid var(--border-color);
-            position: relative; overflow: hidden;
-            display: flex; align-items: center; justify-content: center;
-            flex-direction: column; padding-top: 60px;
+            min-height: 100vh; width: 100%; background: transparent;
+            border-bottom: 1px solid var(--border-color); position: relative; overflow: hidden;
+            display: flex; align-items: center; justify-content: center; flex-direction: column; padding-top: 60px;
         }
-
         .hero-content { position: relative; z-index: 1; width: 100%; }
 
-        /* --- ORBITAL LOGO ANIMATION (NEW) --- */
+        /* --- ORBITAL LOGO --- */
         .logo-orbit-wrapper {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 420px; /* Lebar area orbit */
-            height: 420px;
-            margin: 0 auto;
+            position: relative; display: flex; justify-content: center; align-items: center;
+            width: 420px; height: 420px; margin: 0 auto;
         }
-
         .unnes-logo-hero {
-            position: relative;
-            z-index: 10;
-            max-height: 280px; /* Ukuran logo di dalam orbit */
-            width: auto;
+            position: relative; z-index: 10; max-height: 280px; width: auto;
             filter: drop-shadow(0 0 40px rgba(102, 252, 241, 0.4));
             transition: transform 0.3s;
         }
         .unnes-logo-hero:hover { transform: scale(1.05); }
-
-        .orbit {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        /* Inner Ring */
-        .orbit-1 {
-            width: 320px; height: 320px;
-            border: 1px solid rgba(102, 252, 241, 0.3);
-            border-top-color: transparent;
-            border-left-color: transparent;
-            animation: spin-cw 12s linear infinite;
-        }
-
-        /* Middle Dashed Ring */
-        .orbit-2 {
-            width: 360px; height: 360px;
-            border: 1px dashed rgba(102, 252, 241, 0.2);
-            animation: spin-ccw 25s linear infinite;
-        }
-
-        /* Outer Ring with Planet */
-        .orbit-3 {
-            width: 400px; height: 400px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            animation: spin-cw 20s linear infinite;
-        }
-        .orbit-3::after {
-            content: '';
-            position: absolute;
-            top: 50px; left: 50px;
-            width: 8px; height: 8px;
-            background: var(--primary);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--primary);
-        }
-
+        .orbit { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; }
+        .orbit-1 { width: 320px; height: 320px; border: 1px solid rgba(102, 252, 241, 0.3); border-top-color: transparent; border-left-color: transparent; animation: spin-cw 12s linear infinite; }
+        .orbit-2 { width: 360px; height: 360px; border: 1px dashed rgba(102, 252, 241, 0.2); animation: spin-ccw 25s linear infinite; }
+        .orbit-3 { width: 400px; height: 400px; border: 1px solid rgba(255, 255, 255, 0.05); animation: spin-cw 20s linear infinite; }
+        .orbit-3::after { content: ''; position: absolute; top: 50px; left: 50px; width: 8px; height: 8px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 10px var(--primary); }
         @keyframes spin-cw { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
         @keyframes spin-ccw { from { transform: translate(-50%, -50%) rotate(360deg); } to { transform: translate(-50%, -50%) rotate(0deg); } }
-
-        /* Mobile Adjustment for Orbit */
-        @media (max-width: 991px) {
-            .logo-orbit-wrapper { transform: scale(0.7); margin-top: -40px; margin-bottom: -40px; }
-        }
-
+        @media (max-width: 991px) { .logo-orbit-wrapper { transform: scale(0.7); margin-top: -40px; margin-bottom: -40px; } }
 
         .feature-pill {
             display: inline-flex; align-items: center; gap: 8px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border-color);
-            padding: 8px 16px; border-radius: 50px;
-            font-size: 0.85rem; color: var(--text-muted);
-            margin-right: 8px; margin-bottom: 8px; transition: 0.3s;
-            backdrop-filter: blur(5px);
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 50px;
+            font-size: 0.85rem; color: var(--text-muted); margin-right: 8px; margin-bottom: 8px; transition: 0.3s; backdrop-filter: blur(5px);
         }
         .feature-pill:hover { border-color: var(--primary); color: white; background: rgba(102, 252, 241, 0.1); }
         .feature-pill i { color: var(--primary); }
@@ -260,160 +224,55 @@
             animation: bounce 2s infinite; z-index: 10; text-decoration: none;
             display: flex; flex-direction: column; align-items: center; gap: 5px;
         }
-        .scroll-down-btn span { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; }
         .scroll-down-btn:hover { color: var(--primary); }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {transform: translateY(0) translateX(-50%);}
-            40% {transform: translateY(-10px) translateX(-50%);}
-            60% {transform: translateY(-5px) translateX(-50%);}
-        }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0) translateX(-50%);} 40% {transform: translateY(-10px) translateX(-50%);} 60% {transform: translateY(-5px) translateX(-50%);} }
 
         /* --- ABSTRACT SECTION --- */
-        .abstract-section {
-            padding: 8rem 0;
-            position: relative;
-            background: transparent;
-        }
-
+        .abstract-section { padding: 8rem 0; position: relative; background: transparent; }
         .abstract-card {
-            background: rgba(31, 40, 51, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 3rem;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
+            background: rgba(31, 40, 51, 0.6); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px; padding: 3rem; backdrop-filter: blur(12px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            position: relative; overflow: hidden;
         }
-
-        .abstract-card::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-            background: linear-gradient(90deg, transparent, var(--primary), transparent);
-        }
-
+        .abstract-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--primary), transparent); }
         .section-badge {
-            display: inline-block;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 1rem;
-            border: 1px solid rgba(102, 252, 241, 0.3);
-            padding: 6px 12px;
-            border-radius: 4px;
+            display: inline-block; font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 2px;
+            margin-bottom: 1rem; border: 1px solid rgba(102, 252, 241, 0.3); padding: 6px 12px; border-radius: 4px;
         }
+        .abstract-title { font-size: 2.5rem; font-weight: 800; color: white; margin-bottom: 1.5rem; line-height: 1.2; }
+        .abstract-text { font-size: 1.05rem; color: #c5c6c7; line-height: 1.8; margin-bottom: 0; }
 
-        .abstract-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
-        }
-
-        .abstract-text {
-            font-size: 1.05rem;
-            color: #c5c6c7;
-            line-height: 1.8;
-            margin-bottom: 0;
-        }
-
-        /* --- PIPELINE FLOW SECTION (ZIG-ZAG) --- */
-        .pipeline-section {
-            padding: 6rem 0;
-            border-bottom: 1px solid var(--border-color);
-            background-color: rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-
-        .pipeline-wrapper {
-            display: flex; flex-direction: column; position: relative; margin-top: 3rem; align-items: center;
-        }
-
-        .pipeline-wrapper::before {
-            content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 100%;
-            background: rgba(255,255,255,0.1); transform: translateX(-50%); z-index: 0;
-        }
-
-        .pipeline-step {
-            position: relative; z-index: 1; width: 50%; padding: 0 40px;
-            margin-bottom: 4rem; display: flex; align-items: center;
-        }
-
+        /* --- PIPELINE FLOW --- */
+        .pipeline-section { padding: 6rem 0; border-bottom: 1px solid var(--border-color); background-color: rgba(0,0,0,0.2); overflow: hidden; }
+        .pipeline-wrapper { display: flex; flex-direction: column; position: relative; margin-top: 3rem; align-items: center; }
+        .pipeline-wrapper::before { content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 100%; background: rgba(255,255,255,0.1); transform: translateX(-50%); z-index: 0; }
+        .pipeline-step { position: relative; z-index: 1; width: 50%; padding: 0 40px; margin-bottom: 4rem; display: flex; align-items: center; }
         .pipeline-step:nth-child(odd) { align-self: flex-start; flex-direction: row-reverse; text-align: right; }
-        .pipeline-step:nth-child(odd)::after {
-            content: ''; position: absolute; top: 50%; right: 0;
-            width: 40px; height: 2px; background: var(--primary);
-            transform: translateY(-50%); z-index: -1; box-shadow: 0 0 10px var(--primary);
-        }
-
+        .pipeline-step:nth-child(odd)::after { content: ''; position: absolute; top: 50%; right: 0; width: 40px; height: 2px; background: var(--primary); transform: translateY(-50%); z-index: -1; box-shadow: 0 0 10px var(--primary); }
         .pipeline-step:nth-child(even) { align-self: flex-end; flex-direction: row; text-align: left; }
-        .pipeline-step:nth-child(even)::after {
-            content: ''; position: absolute; top: 50%; left: 0;
-            width: 40px; height: 2px; background: var(--primary);
-            transform: translateY(-50%); z-index: -1; box-shadow: 0 0 10px var(--primary);
-        }
-
-        .step-circle {
-            width: 60px; height: 60px; flex-shrink: 0;
-            background-color: var(--bg-body); border: 2px solid var(--primary);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: var(--primary); font-family: 'JetBrains Mono'; font-weight: bold; font-size: 1.2rem;
-            box-shadow: 0 0 15px rgba(102, 252, 241, 0.2); transition: 0.3s; z-index: 2;
-        }
-        .pipeline-step:hover .step-circle {
-            transform: scale(1.15); background-color: var(--primary); color: black;
-            box-shadow: 0 0 30px rgba(102, 252, 241, 0.6);
-        }
-
-        .step-content {
-            background: rgba(31, 40, 51, 0.7); border: 1px solid var(--border-color);
-            padding: 1.5rem; border-radius: 12px; flex-grow: 1; transition: 0.3s; position: relative;
-            min-height: 120px; display: flex; flex-direction: column; justify-content: center;
-            backdrop-filter: blur(5px);
-        }
+        .pipeline-step:nth-child(even)::after { content: ''; position: absolute; top: 50%; left: 0; width: 40px; height: 2px; background: var(--primary); transform: translateY(-50%); z-index: -1; box-shadow: 0 0 10px var(--primary); }
+        .step-circle { width: 60px; height: 60px; flex-shrink: 0; background-color: var(--bg-body); border: 2px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: bold; font-size: 1.2rem; box-shadow: 0 0 15px rgba(102, 252, 241, 0.2); transition: 0.3s; z-index: 2; }
+        .pipeline-step:hover .step-circle { transform: scale(1.15); background-color: var(--primary); color: black; box-shadow: 0 0 30px rgba(102, 252, 241, 0.6); }
+        .step-content { background: rgba(31, 40, 51, 0.7); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 12px; flex-grow: 1; transition: 0.3s; position: relative; min-height: 120px; display: flex; flex-direction: column; justify-content: center; backdrop-filter: blur(5px); }
         .pipeline-step:hover .step-content { border-color: var(--primary); transform: translateY(-5px); }
-
         .pipeline-step:nth-child(odd) .step-content { margin-right: 2rem; }
         .pipeline-step:nth-child(even) .step-content { margin-left: 2rem; }
-
         .step-title { color: white; font-size: 1rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px; }
         .step-desc { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; }
         .step-highlight { color: var(--primary); font-weight: bold; font-family: 'JetBrains Mono'; }
-
         @media (max-width: 991px) {
             .pipeline-wrapper::before { left: 30px; }
-            .pipeline-step {
-                width: 100%; padding: 0 0 0 70px; margin-bottom: 3rem;
-                align-self: flex-start !important; flex-direction: row !important; text-align: left !important;
-            }
+            .pipeline-step { width: 100%; padding: 0 0 0 70px; margin-bottom: 3rem; align-self: flex-start !important; flex-direction: row !important; text-align: left !important; }
             .pipeline-step::after { display: none; }
             .step-circle { margin-right: 1.5rem; position: absolute; left: 0; top: 0; }
             .step-content { margin: 0 !important; min-height: auto; }
         }
 
         /* --- TEAM SECTION --- */
-        .team-section {
-            padding: 6rem 0; border-top: 1px solid var(--border-color);
-            background: rgba(0,0,0,0.3);
-        }
-        .team-card {
-            background-color: rgba(31, 40, 51, 0.5); border: 1px solid var(--border-color);
-            border-radius: 12px; overflow: hidden; text-align: center;
-            transition: transform 0.3s ease, border-color 0.3s ease; height: 100%;
-            backdrop-filter: blur(5px);
-        }
-        .team-card:hover {
-            transform: translateY(-8px); border-color: var(--primary);
-            box-shadow: 0 10px 20px -10px rgba(102, 252, 241, 0.2);
-        }
-        .team-card-img {
-            width: 100%; height: 300px; object-fit: cover;
-            object-position: center top; border-bottom: 1px solid var(--border-color);
-        }
+        .team-section { padding: 6rem 0; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.3); }
+        .team-card { background-color: rgba(31, 40, 51, 0.5); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; text-align: center; transition: transform 0.3s ease, border-color 0.3s ease; height: 100%; backdrop-filter: blur(5px); }
+        .team-card:hover { transform: translateY(-8px); border-color: var(--primary); box-shadow: 0 10px 20px -10px rgba(102, 252, 241, 0.2); }
+        .team-card-img { width: 100%; height: 300px; object-fit: cover; object-position: center top; border-bottom: 1px solid var(--border-color); }
         .team-card-body { padding: 1.5rem; }
         .team-name { font-size: 1.2rem; font-weight: 700; color: white; margin-bottom: 0.5rem; letter-spacing: 0.5px; }
         .team-role { font-size: 0.9rem; color: var(--primary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px; }
@@ -470,7 +329,6 @@
                     <div class="orbit orbit-1"></div>
                     <div class="orbit orbit-2"></div>
                     <div class="orbit orbit-3"></div>
-
                     <img src="https://unnes.ac.id/lppm/wp-content/uploads/sites/16/2015/08/Logo-Transparan-Warna-1.png" alt="UNNES Logo" class="unnes-logo-hero">
                 </div>
             </div>
@@ -627,11 +485,36 @@
             <div class="tech-card h-100">
                 <div class="card-header-tech"><i class="fas fa-cog"></i> Configuration</div>
                 <div class="p-4">
-                    <div class="mb-4">
-                        <label class="small text-muted fw-bold mb-2">SELECT S-BOX</label>
-                        <select id="jsonSelect" class="form-select" onchange="loadFromJSON()">
-                            <option value="" disabled selected>Loading Database...</option>
-                        </select>
+
+                    <div class="d-flex gap-2 mb-4 p-1 bg-black rounded border border-secondary border-opacity-25">
+                        <button class="btn btn-outline-tech w-50 active btn-sm" onclick="switchMode('db')" id="btn-mode-db">Database</button>
+                        <button class="btn btn-outline-tech w-50 btn-sm" onclick="switchMode('custom')" id="btn-mode-custom">Laboratory</button>
+                    </div>
+
+                    <div id="mode-db-container">
+                        <div class="mb-4">
+                            <label class="small text-muted fw-bold mb-2">SELECT S-BOX</label>
+                            <select id="jsonSelect" class="form-select" onchange="loadFromJSON()">
+                                <option value="" disabled selected>Loading Database...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="mode-custom-container" class="hidden">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="small text-muted fw-bold">AFFINE MATRIX (8x8)</label>
+                                <button onclick="resetMatrix()" class="btn btn-link btn-sm text-muted p-0" style="font-size: 0.7rem;">Reset</button>
+                            </div>
+                            <div class="affine-grid-input" id="input-matrix"></div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="small text-muted fw-bold mb-2">ADDITIVE CONSTANT (C)</label>
+                            <div class="constant-grid-input" id="input-constant"></div>
+                        </div>
+
+                        <button onclick="generateCustomSBox()" class="btn btn-outline-tech w-100 mb-3"><i class="fas fa-microchip me-2"></i>Generate S-Box</button>
                     </div>
 
                     <div class="mb-4">
@@ -900,6 +783,8 @@
 <script>
     let sboxDatabase = [];
     let currentMetrics = null;
+    let customMatrix = Array(64).fill(0);
+    let customConstant = Array(8).fill(0);
 
     window.onload = async () => {
         try {
@@ -918,8 +803,101 @@
                 compB.appendChild(new Option(c.name, c.index));
             });
             renderGrid(new Array(256).fill(0));
+            initCustomInputs(); // Initialize the clickable grids
         } catch(e) {}
     };
+
+    // --- NEW: CUSTOM MATRIX LOGIC ---
+    function initCustomInputs() {
+        const matGrid = document.getElementById('input-matrix');
+        const constGrid = document.getElementById('input-constant');
+        matGrid.innerHTML = ''; constGrid.innerHTML = '';
+
+        // Matrix A (8x8)
+        for(let i=0; i<64; i++) {
+            const btn = document.createElement('div');
+            btn.className = 'bit-btn';
+            btn.innerText = '0';
+            btn.onclick = () => toggleBit(btn, i, 'matrix');
+            matGrid.appendChild(btn);
+        }
+        // Constant C (1x8)
+        for(let i=0; i<8; i++) {
+            const btn = document.createElement('div');
+            btn.className = 'bit-btn';
+            btn.innerText = '0';
+            btn.onclick = () => toggleBit(btn, i, 'constant');
+            constGrid.appendChild(btn);
+        }
+    }
+
+    function toggleBit(el, idx, type) {
+        if(type === 'matrix') {
+            customMatrix[idx] = customMatrix[idx] ? 0 : 1;
+            el.innerText = customMatrix[idx];
+            el.classList.toggle('active');
+        } else {
+            customConstant[idx] = customConstant[idx] ? 0 : 1;
+            el.innerText = customConstant[idx];
+            el.classList.toggle('active');
+        }
+    }
+
+    function resetMatrix() {
+        customMatrix.fill(0); customConstant.fill(0);
+        document.querySelectorAll('.bit-btn').forEach(b => {
+            b.innerText = '0'; b.classList.remove('active');
+        });
+    }
+
+    function switchMode(mode) {
+        if(mode === 'db') {
+            document.getElementById('mode-db-container').classList.remove('hidden');
+            document.getElementById('mode-custom-container').classList.add('hidden');
+            document.getElementById('btn-mode-db').classList.add('active');
+            document.getElementById('btn-mode-custom').classList.remove('active');
+        } else {
+            document.getElementById('mode-db-container').classList.add('hidden');
+            document.getElementById('mode-custom-container').classList.remove('hidden');
+            document.getElementById('btn-mode-db').classList.remove('active');
+            document.getElementById('btn-mode-custom').classList.add('active');
+        }
+    }
+
+    async function generateCustomSBox() {
+        // Prepare Payload
+        const payload = {
+            matrix: customMatrix,
+            constant: customConstant
+        };
+
+        document.getElementById('loader').style.display = 'flex';
+
+        // PENTING: Anda harus menambahkan endpoint '/api/generate_custom' di app.py
+        // Jika belum ada, fungsi ini hanya akan alert error.
+        try {
+            const res = await fetch('/api/generate_custom', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            document.getElementById('loader').style.display = 'none';
+
+            if(data.status === 'success') {
+                document.getElementById('sboxInput').value = data.sbox.join(', ');
+                renderGrid(data.sbox);
+                // Auto Analyze after generation
+                analyze();
+            } else {
+                alert("Generation Error: " + (data.error || "Unknown"));
+            }
+        } catch(e) {
+            document.getElementById('loader').style.display = 'none';
+            alert("Backend Error: Pastikan endpoint '/api/generate_custom' sudah ada di app.py Anda.\n\n" + e);
+        }
+    }
+    // ---------------------------------
 
     function toggleSidebar(show) {
         const sb = document.getElementById('sidebarCol');
