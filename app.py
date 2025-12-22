@@ -4,6 +4,8 @@ import json
 import os
 import io
 import base64
+import math
+import random
 from collections import Counter
 from PIL import Image
 
@@ -24,7 +26,6 @@ def load_database():
             with open(DB_FILENAME, 'r') as f:
                 data = json.load(f)
                 SBOX_CANDIDATES = data.get('candidates', [])
-                print(f"[INFO] Loaded {len(SBOX_CANDIDATES)} S-Boxes.")
         except:
             SBOX_CANDIDATES = []
 
@@ -33,24 +34,15 @@ load_database()
 
 
 # ==============================================================================
-# 2. CORE CRYPTO LOGIC (MATH FUNCTIONS)
+# 2. CORE LOGIC & METRICS
 # ==============================================================================
 
-# --- HELPER: GF(2^8) INVERSE (AES POLYNOMIAL 0x11B) ---
+# --- GF(2^8) & AFFINE ---
 def gf_inverse(val):
-    """Mencari invers multiplikatif di GF(2^8) dengan algo Extended Euclidean"""
     if val == 0: return 0
-    # Menggunakan tabel log/alog atau brute force power (x^254) untuk invers
-    # Disini kita pakai cara 'pow' pythonic untuk GF(2^8)
-    # Implementasi simpel invers via exponentiation: a^(-1) = a^(2^n - 2)
-    # Tapi karena python pow tidak support GF polinomial, kita pakai tabel lookup standar
-    # atau logika manual. Untuk keringanan skripsi, kita pakai lookup table AES invers
-    # ATAU kita hitung manual per bit (lebih berat tapi 'custom').
-
-    # KITA PAKAI LOGIKA MANUAL (Power 254) AGAR ILMIAH:
-    res = 1
-    base = val
-    exp = 254  # Invers di GF(2^8) adalah pangkat 254
+    res = 1;
+    base = val;
+    exp = 254
     for _ in range(8):
         if (exp & 1): res = gf_mult(res, base)
         base = gf_mult(base, base)
@@ -59,52 +51,32 @@ def gf_inverse(val):
 
 
 def gf_mult(a, b):
-    """Perkalian Galois Field modulo 0x11B"""
     p = 0
     for _ in range(8):
         if (b & 1): p ^= a
         hi_bit = (a & 0x80)
         a <<= 1
-        if hi_bit: a ^= 0x11B  # AES Polynomial
+        if hi_bit: a ^= 0x11B
         b >>= 1
     return p & 0xFF
 
 
-# --- HELPER: APPLY AFFINE TRANSFORM ---
 def apply_affine(byte_val, matrix_flat, constant_flat):
-    """
-    byte_val: integer 0-255 (Input setelah di-invers)
-    matrix_flat: list 64 bit (0/1) dari UI
-    constant_flat: list 8 bit (0/1) dari UI
-    """
-    # 1. Convert input byte ke array bit [b0, b1, ... b7] (LSB first atau MSB tergantung konvensi)
-    # Konvensi AES biasanya LSB di index 0. Kita pakai standar umum:
     bits = [(byte_val >> i) & 1 for i in range(8)]
-
     output_bits = [0] * 8
-
-    # 2. Matrix Multiplication (M x V)
-    # Matrix di UI urutannya baris 0 (bit0..7), baris 1, dst.
     for row in range(8):
-        val = constant_flat[7 - row]  # Konstanta (XOR di akhir), index disesuaikan
-
-        # Dot product baris matriks dengan input bits
+        val = constant_flat[7 - row]
         for col in range(8):
-            # Index di flat array 64 elemen: (row * 8) + col
             mat_bit = matrix_flat[(row * 8) + (7 - col)]
             val ^= (mat_bit & bits[col])
-
         output_bits[row] = val
-
-    # 3. Convert bits back to integer
     res = 0
     for i in range(8):
         if output_bits[i]: res |= (1 << i)
-
     return res
 
 
-# --- HELPER METRICS (SAMA SEPERTI SEBELUMNYA) ---
+# --- S-BOX METRICS ---
 def fast_walsh_transform(func):
     n = len(func);
     wf = list(func)
@@ -211,7 +183,7 @@ def calculate_ad(sbox):
 
 
 def calculate_to(sbox):
-    N = 256
+    N = 256;
     max_to_val = 0
     for beta in range(1, N):
         func = [(get_bit_count(sbox[x] & beta) % 2) for x in range(N)]
@@ -239,8 +211,7 @@ def calculate_ci(sbox):
     return int(min_ci)
 
 
-def calculate_fixed_points(sbox):
-    return sum(1 for x in range(256) if sbox[x] == x)
+def calculate_fixed_points(sbox): return sum(1 for x in range(256) if sbox[x] == x)
 
 
 def calculate_cycles(sbox):
@@ -250,10 +221,7 @@ def calculate_cycles(sbox):
         if not visited[i]:
             curr = i;
             length = 0
-            while not visited[curr]:
-                visited[curr] = True
-                curr = sbox[curr]
-                length += 1
+            while not visited[curr]: visited[curr] = True; curr = sbox[curr]; length += 1
             cycles.append(length)
     return {"max": max(cycles) if cycles else 0}
 
@@ -269,19 +237,109 @@ def calculate_all_metrics(sbox):
     val_sac = calculate_sac(sbox)
     val_bic_nl = calculate_bic_nl(sbox)
     val_bic_sac = calculate_bic_sac(sbox)
-    val_sv = calculate_strength_value(val_nl, val_sac, val_bic_nl, val_bic_sac)
-
     return {
         "NL": val_nl, "SAC": val_sac, "BIC_NL": val_bic_nl, "BIC_SAC": val_bic_sac,
         "LAP": calculate_lap(sbox), "DAP": calculate_dap(sbox), "DU": calculate_du(sbox),
         "AD": calculate_ad(sbox), "TO": calculate_to(sbox), "CI": calculate_ci(sbox),
         "FIXED": calculate_fixed_points(sbox), "CYC_MAX": calculate_cycles(sbox)['max'],
-        "SV_PAPER": val_sv
+        "SV_PAPER": calculate_strength_value(val_nl, val_sac, val_bic_nl, val_bic_sac)
     }
 
 
 # ==============================================================================
-# 3. ROUTES
+# 3. ADVANCED IMAGE ANALYTICS (ENTROPY, CORRELATION, NPCR, UACI)
+# ==============================================================================
+
+def calculate_entropy(data_bytes):
+    """Shannon Entropy"""
+    if not data_bytes: return 0
+    counts = Counter(data_bytes)
+    total_len = len(data_bytes)
+    entropy = 0
+    for count in counts.values():
+        p = count / total_len
+        if p > 0: entropy -= p * math.log2(p)
+    return round(entropy, 5)
+
+
+def calculate_correlation(data_bytes, w, h):
+    """Calculates Adjacent Pixel Correlation (Horizontal, Vertical, Diagonal)"""
+    # Convert to numpy array for speed
+    arr = np.frombuffer(data_bytes, dtype=np.uint8)
+    # Resize if array size matches w*h (handle potential padding/headers issue simply)
+    if len(arr) != w * h:
+        # If size mismatch (e.g. RGB flattened), take first channel or grayscale equivalent
+        # For simplicity in this demo, we limit to first N pixels that fit
+        size = w * h
+        if len(arr) > size:
+            arr = arr[:size]
+        elif len(arr) < size:
+            return {"H": 0, "V": 0, "D": 0}
+
+    img_matrix = arr.reshape((h, w))
+
+    # Helper for correlation coef
+    def get_corr(x, y):
+        if len(x) == 0: return 0
+        return np.corrcoef(x, y)[0, 1]
+
+    # Select N random pairs (limit to 3000 pairs for performance)
+    N = 3000
+
+    # Horizontal
+    x_h, y_h = [], []
+    for _ in range(N):
+        r = random.randint(0, h - 1)
+        c = random.randint(0, w - 2)
+        x_h.append(img_matrix[r, c])
+        y_h.append(img_matrix[r, c + 1])
+
+    # Vertical
+    x_v, y_v = [], []
+    for _ in range(N):
+        r = random.randint(0, h - 2)
+        c = random.randint(0, w - 1)
+        x_v.append(img_matrix[r, c])
+        y_v.append(img_matrix[r + 1, c])
+
+    # Diagonal
+    x_d, y_d = [], []
+    for _ in range(N):
+        r = random.randint(0, h - 2)
+        c = random.randint(0, w - 2)
+        x_d.append(img_matrix[r, c])
+        y_d.append(img_matrix[r + 1, c + 1])
+
+    return {
+        "H": round(get_corr(x_h, y_h), 5),
+        "V": round(get_corr(x_v, y_v), 5),
+        "D": round(get_corr(x_d, y_d), 5)
+    }
+
+
+def calculate_npcr_uaci(orig_bytes, cipher_bytes):
+    """Calculates NPCR and UACI between two images"""
+    arr1 = np.frombuffer(orig_bytes, dtype=np.uint8)
+    arr2 = np.frombuffer(cipher_bytes, dtype=np.uint8)
+
+    # Ensure same length
+    min_len = min(len(arr1), len(arr2))
+    arr1 = arr1[:min_len]
+    arr2 = arr2[:min_len]
+
+    # NPCR: Rate of pixel change
+    diff_count = np.sum(arr1 != arr2)
+    npcr = (diff_count / min_len) * 100
+
+    # UACI: Unified Average Changing Intensity
+    abs_diff = np.sum(np.abs(arr1.astype(int) - arr2.astype(int)))
+    uaci = (abs_diff / (255 * min_len)) * 100
+
+    return round(npcr, 4), round(uaci, 4)
+
+
+# ==============================================================================
+# 4. ROUTING
 # ==============================================================================
 
 @app.route('/')
@@ -302,29 +360,17 @@ def get_sbox(idx):
     return jsonify({"error": "Not found"}), 404
 
 
-# --- NEW: GENERATE S-BOX FROM CUSTOM MATRIX ---
 @app.route('/api/generate_custom', methods=['POST'])
 def generate_custom():
     try:
-        data = request.json
-        matrix = data.get('matrix')  # Array 64 elements (0/1)
-        constant = data.get('constant')  # Array 8 elements (0/1)
-
-        if not matrix or len(matrix) != 64 or not constant or len(constant) != 8:
-            return jsonify({"error": "Invalid matrix/constant size"}), 400
-
-        generated_sbox = []
-        for i in range(256):
-            # 1. Invers di GF(2^8)
-            inv = gf_inverse(i)
-            # 2. Affine Transform (Matrix * inv + const)
-            res = apply_affine(inv, matrix, constant)
-            generated_sbox.append(res)
-
-        return jsonify({"status": "success", "sbox": generated_sbox})
-
+        d = request.json
+        matrix = d.get('matrix');
+        constant = d.get('constant')
+        if not matrix or len(matrix) != 64 or not constant or len(constant) != 8: return jsonify(
+            {"error": "Invalid input"}), 400
+        gen_sbox = [apply_affine(gf_inverse(i), matrix, constant) for i in range(256)]
+        return jsonify({"status": "success", "sbox": gen_sbox})
     except Exception as e:
-        print("Error:", e)
         return jsonify({"error": str(e)}), 500
 
 
@@ -338,14 +384,10 @@ def analyze():
         return jsonify({"error": str(e)}), 500
 
 
-# Helper Encryption
 def encrypt_cbc_bytes(data, sbox):
     out = bytearray();
     prev = 0
-    for b in data:
-        val = sbox[b ^ prev];
-        out.append(val);
-        prev = val
+    for b in data: val = sbox[b ^ prev]; out.append(val); prev = val
     return out
 
 
@@ -354,10 +396,7 @@ def decrypt_cbc_bytes(data, sbox):
     for i, v in enumerate(sbox): inv[v] = i
     out = bytearray();
     prev = 0
-    for b in data:
-        val = inv[b] ^ prev;
-        out.append(val);
-        prev = b
+    for b in data: val = inv[b] ^ prev; out.append(val); prev = b
     return out
 
 
@@ -371,10 +410,9 @@ def process_text():
             res = encrypt_cbc_bytes(d['text'].encode(), sbox).hex().upper()
         else:
             try:
-                b = bytes.fromhex(d['text'].replace(' ', ''))
-                res = decrypt_cbc_bytes(b, sbox).decode(errors='ignore')
+                b = bytes.fromhex(d['text'].replace(' ', '')); res = decrypt_cbc_bytes(b, sbox).decode(errors='ignore')
             except:
-                res = "[Decryption Error: Invalid Hex or Key]"
+                res = "[Error: Invalid Hex]"
         return jsonify({"status": "success", "result": res})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -384,16 +422,47 @@ def process_text():
 def process_image():
     try:
         f = request.files['image']
-        sbox = [int(x) for x in request.form['sbox'].split(',')]
-        img = Image.open(f).convert('RGB')
-        b = img.tobytes()
-        proc = encrypt_cbc_bytes(b, sbox) if request.form['mode'] == 'encrypt' else decrypt_cbc_bytes(b, sbox)
-        res_img = Image.frombytes('RGB', img.size, bytes(proc))
+        sbox_str = request.form.get('sbox')
+        if not sbox_str: return jsonify({"error": "S-Box missing"}), 400
+        sbox = [int(x) for x in sbox_str.split(',')]
+        mode = request.form.get('mode')
+
+        img = Image.open(f).convert('L')  # Convert to Grayscale for simpler analysis (common in papers)
+        # OR keep RGB but flatten. Let's use Grayscale ('L') to strictly follow standard crypto metrics on pixel values.
+        # If you want RGB, change 'L' to 'RGB'.
+
+        orig_bytes = img.tobytes()
+        w, h = img.size
+
+        if mode == 'encrypt':
+            proc_bytes = encrypt_cbc_bytes(orig_bytes, sbox)
+            # Calculate Metrics only on Encryption
+            entropy = calculate_entropy(proc_bytes)
+            corr = calculate_correlation(proc_bytes, w, h)
+            npcr, uaci = calculate_npcr_uaci(orig_bytes, proc_bytes)
+
+            stats = {
+                "entropy": entropy,
+                "corr": corr,
+                "npcr": npcr,
+                "uaci": uaci
+            }
+        else:
+            proc_bytes = decrypt_cbc_bytes(orig_bytes, sbox)
+            stats = None
+
+        res_img = Image.frombytes('L', (w, h), bytes(proc_bytes))
         buf = io.BytesIO()
         res_img.save(buf, 'PNG')
         buf.seek(0)
-        return jsonify({"status": "success", "image_b64": base64.b64encode(buf.getvalue()).decode()})
+
+        return jsonify({
+            "status": "success",
+            "image_b64": base64.b64encode(buf.getvalue()).decode(),
+            "stats": stats
+        })
     except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 500
 
 
