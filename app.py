@@ -33,14 +33,82 @@ load_database()
 
 
 # ==============================================================================
-# 2. CORE CRYPTO & METRICS (UPDATED)
+# 2. CORE CRYPTO LOGIC (MATH FUNCTIONS)
 # ==============================================================================
 
+# --- HELPER: GF(2^8) INVERSE (AES POLYNOMIAL 0x11B) ---
+def gf_inverse(val):
+    """Mencari invers multiplikatif di GF(2^8) dengan algo Extended Euclidean"""
+    if val == 0: return 0
+    # Menggunakan tabel log/alog atau brute force power (x^254) untuk invers
+    # Disini kita pakai cara 'pow' pythonic untuk GF(2^8)
+    # Implementasi simpel invers via exponentiation: a^(-1) = a^(2^n - 2)
+    # Tapi karena python pow tidak support GF polinomial, kita pakai tabel lookup standar
+    # atau logika manual. Untuk keringanan skripsi, kita pakai lookup table AES invers
+    # ATAU kita hitung manual per bit (lebih berat tapi 'custom').
+
+    # KITA PAKAI LOGIKA MANUAL (Power 254) AGAR ILMIAH:
+    res = 1
+    base = val
+    exp = 254  # Invers di GF(2^8) adalah pangkat 254
+    for _ in range(8):
+        if (exp & 1): res = gf_mult(res, base)
+        base = gf_mult(base, base)
+        exp >>= 1
+    return res
+
+
+def gf_mult(a, b):
+    """Perkalian Galois Field modulo 0x11B"""
+    p = 0
+    for _ in range(8):
+        if (b & 1): p ^= a
+        hi_bit = (a & 0x80)
+        a <<= 1
+        if hi_bit: a ^= 0x11B  # AES Polynomial
+        b >>= 1
+    return p & 0xFF
+
+
+# --- HELPER: APPLY AFFINE TRANSFORM ---
+def apply_affine(byte_val, matrix_flat, constant_flat):
+    """
+    byte_val: integer 0-255 (Input setelah di-invers)
+    matrix_flat: list 64 bit (0/1) dari UI
+    constant_flat: list 8 bit (0/1) dari UI
+    """
+    # 1. Convert input byte ke array bit [b0, b1, ... b7] (LSB first atau MSB tergantung konvensi)
+    # Konvensi AES biasanya LSB di index 0. Kita pakai standar umum:
+    bits = [(byte_val >> i) & 1 for i in range(8)]
+
+    output_bits = [0] * 8
+
+    # 2. Matrix Multiplication (M x V)
+    # Matrix di UI urutannya baris 0 (bit0..7), baris 1, dst.
+    for row in range(8):
+        val = constant_flat[7 - row]  # Konstanta (XOR di akhir), index disesuaikan
+
+        # Dot product baris matriks dengan input bits
+        for col in range(8):
+            # Index di flat array 64 elemen: (row * 8) + col
+            mat_bit = matrix_flat[(row * 8) + (7 - col)]
+            val ^= (mat_bit & bits[col])
+
+        output_bits[row] = val
+
+    # 3. Convert bits back to integer
+    res = 0
+    for i in range(8):
+        if output_bits[i]: res |= (1 << i)
+
+    return res
+
+
+# --- HELPER METRICS (SAMA SEPERTI SEBELUMNYA) ---
 def fast_walsh_transform(func):
-    """Fast Walsh-Hadamard Transform (FWT)"""
     n = len(func);
     wf = list(func)
-    if all(x in [0, 1] for x in wf): wf = [1 if x == 0 else -1 for x in wf]  # Map boolean
+    if all(x in [0, 1] for x in wf): wf = [1 if x == 0 else -1 for x in wf]
     h = 1
     while h < n:
         for i in range(0, n, h * 2):
@@ -56,7 +124,6 @@ def fast_walsh_transform(func):
 def get_bit_count(n): return bin(n).count('1')
 
 
-# --- STANDARD METRICS ---
 def calculate_nl(sbox):
     min_nl = 256
     for i in range(8):
@@ -98,7 +165,9 @@ def calculate_bic_sac(sbox):
             for inp in range(256):
                 val = ((sbox[inp] >> i) & 1) ^ ((sbox[inp] >> j) & 1)
                 for b in range(8):
-                    if val != (((sbox[inp ^ (1 << b)] >> i) & 1) ^ ((sbox[inp ^ (1 << b)] >> j) & 1)): total += 1
+                    diff_inp = inp ^ (1 << b)
+                    val_diff = ((sbox[diff_inp] >> i) & 1) ^ ((sbox[diff_inp] >> j) & 1)
+                    if val != val_diff: total += 1
                     cnt += 1
     return total / cnt if cnt > 0 else 0
 
@@ -142,42 +211,22 @@ def calculate_ad(sbox):
 
 
 def calculate_to(sbox):
-    """
-    Transparency Order (TO) - Normalized
-    Menggunakan Autokorelasi via FWT.
-    Output dinormalisasi agar range 0.0 - 1.0 (Lower is Better).
-    """
     N = 256
-    n = 8
     max_to_val = 0
-
     for beta in range(1, N):
-        # 1. Walsh Spectrum
         func = [(get_bit_count(sbox[x] & beta) % 2) for x in range(N)]
         W = fast_walsh_transform(func)
-
-        # 2. Power Spectrum & Autocorrelation
         P = [w ** 2 for w in W]
         AC_raw = fast_walsh_transform(P)
         AC = [val // N for val in AC_raw]
-
-        # 3. Sum Absolute Autocorrelation (a != 0)
         sum_abs_ac = sum(abs(val) for val in AC[1:])
-
-        # 4. Hitung TO Beta
-        # Rumus Normalized: (N - (Sum / (N-1))) / N
-        # Ini akan menghasilkan angka kecil (misal 0.05 - 0.06 untuk AES)
         val = N - (sum_abs_ac / (N - 1))
-        norm_val = val / N  # Normalisasi ke 0-1
-
-        if norm_val > max_to_val:
-            max_to_val = norm_val
-
+        norm_val = val / N
+        if norm_val > max_to_val: max_to_val = norm_val
     return round(max_to_val, 5)
 
 
 def calculate_ci(sbox):
-    """Correlation Immunity"""
     min_ci = 8
     for i in range(8):
         func = [(sbox[x] >> i) & 1 for x in range(256)]
@@ -190,107 +239,50 @@ def calculate_ci(sbox):
     return int(min_ci)
 
 
-# --- NEW METRICS (FROM SCREENSHOTS) ---
-
 def calculate_fixed_points(sbox):
-    """Menghitung jumlah input yang outputnya sama (S[x] == x)"""
     return sum(1 for x in range(256) if sbox[x] == x)
 
 
 def calculate_cycles(sbox):
-    """Menganalisis struktur cycle S-Box"""
-    visited = [False] * 256
+    visited = [False] * 256;
     cycles = []
     for i in range(256):
         if not visited[i]:
-            curr = i
+            curr = i;
             length = 0
             while not visited[curr]:
                 visited[curr] = True
                 curr = sbox[curr]
                 length += 1
             cycles.append(length)
-    return {
-        "min": min(cycles),
-        "max": max(cycles),
-        "count": len(cycles)
-    }
+    return {"max": max(cycles) if cycles else 0}
 
 
-# Tambahkan fungsi ini di bagian metric
 def calculate_strength_value(nl, sac, bic_nl, bic_sac):
-    """
-    Menghitung Strength Value (SV) sesuai rumus Paper Alamsyah et al. Eq(20).
-    Idealnya mendekati 0.
-    Rumus: SV = (120 - NL) + abs(0.5 - SAC) + (120 - BIC_NL) + abs(0.5 - BIC_SAC)
-    """
-    # Pastikan bic_nl dan bic_sac diambil dari hasil perhitungan
-    # Di paper, nilai ideal NL dan BIC-NL dipatok 120 (sedikit diatas max teoretis 112)
-
     sv = (120 - nl) + abs(0.5 - sac) + (120 - bic_nl) + abs(0.5 - bic_sac)
     return round(sv, 6)
 
 
-# Update fungsi wrapper utama
 def calculate_all_metrics(sbox):
     sbox = [int(x) for x in sbox]
-    cycles = calculate_cycles(sbox)
-
-    # Hitung nilai-nilai dulu
     val_nl = calculate_nl(sbox)
     val_sac = calculate_sac(sbox)
     val_bic_nl = calculate_bic_nl(sbox)
     val_bic_sac = calculate_bic_sac(sbox)
-
-    # Hitung SV Paper
     val_sv = calculate_strength_value(val_nl, val_sac, val_bic_nl, val_bic_sac)
 
     return {
-        "NL": val_nl,
-        "SAC": val_sac,
-        "BIC_NL": val_bic_nl,
-        "BIC_SAC": val_bic_sac,
-        "LAP": calculate_lap(sbox),
-        "DAP": calculate_dap(sbox),
-        "DU": calculate_du(sbox),
-        "AD": calculate_ad(sbox),
-        "TO": calculate_to(sbox),
-        "CI": calculate_ci(sbox),
-        "FIXED": calculate_fixed_points(sbox),
-        "CYC_MAX": cycles['max'],
+        "NL": val_nl, "SAC": val_sac, "BIC_NL": val_bic_nl, "BIC_SAC": val_bic_sac,
+        "LAP": calculate_lap(sbox), "DAP": calculate_dap(sbox), "DU": calculate_du(sbox),
+        "AD": calculate_ad(sbox), "TO": calculate_to(sbox), "CI": calculate_ci(sbox),
+        "FIXED": calculate_fixed_points(sbox), "CYC_MAX": calculate_cycles(sbox)['max'],
         "SV_PAPER": val_sv
     }
 
 
 # ==============================================================================
-# 3. ENCRYPTION & ROUTES
+# 3. ROUTES
 # ==============================================================================
-def get_inv_sbox(sbox):
-    inv = [0] * 256
-    for i, v in enumerate(sbox): inv[v] = i
-    return inv
-
-
-def encrypt_cbc(data, sbox):
-    out = bytearray();
-    prev = 0
-    for b in data:
-        val = sbox[b ^ prev];
-        out.append(val);
-        prev = val
-    return out
-
-
-def decrypt_cbc(data, sbox):
-    inv = get_inv_sbox(sbox);
-    out = bytearray();
-    prev = 0
-    for b in data:
-        val = inv[b] ^ prev;
-        out.append(val);
-        prev = b
-    return out
-
 
 @app.route('/')
 def home(): return render_template('index.html')
@@ -310,6 +302,32 @@ def get_sbox(idx):
     return jsonify({"error": "Not found"}), 404
 
 
+# --- NEW: GENERATE S-BOX FROM CUSTOM MATRIX ---
+@app.route('/api/generate_custom', methods=['POST'])
+def generate_custom():
+    try:
+        data = request.json
+        matrix = data.get('matrix')  # Array 64 elements (0/1)
+        constant = data.get('constant')  # Array 8 elements (0/1)
+
+        if not matrix or len(matrix) != 64 or not constant or len(constant) != 8:
+            return jsonify({"error": "Invalid matrix/constant size"}), 400
+
+        generated_sbox = []
+        for i in range(256):
+            # 1. Invers di GF(2^8)
+            inv = gf_inverse(i)
+            # 2. Affine Transform (Matrix * inv + const)
+            res = apply_affine(inv, matrix, constant)
+            generated_sbox.append(res)
+
+        return jsonify({"status": "success", "sbox": generated_sbox})
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
     try:
@@ -320,6 +338,29 @@ def analyze():
         return jsonify({"error": str(e)}), 500
 
 
+# Helper Encryption
+def encrypt_cbc_bytes(data, sbox):
+    out = bytearray();
+    prev = 0
+    for b in data:
+        val = sbox[b ^ prev];
+        out.append(val);
+        prev = val
+    return out
+
+
+def decrypt_cbc_bytes(data, sbox):
+    inv = [0] * 256
+    for i, v in enumerate(sbox): inv[v] = i
+    out = bytearray();
+    prev = 0
+    for b in data:
+        val = inv[b] ^ prev;
+        out.append(val);
+        prev = b
+    return out
+
+
 @app.route('/api/process_text', methods=['POST'])
 def process_text():
     try:
@@ -327,9 +368,13 @@ def process_text():
         mode = d['mode'];
         sbox = d['sbox']
         if mode == 'encrypt':
-            res = encrypt_cbc(d['text'].encode(), sbox).hex().upper()
+            res = encrypt_cbc_bytes(d['text'].encode(), sbox).hex().upper()
         else:
-            res = decrypt_cbc(bytes.fromhex(d['text'].replace(' ', '')), sbox).decode(errors='ignore')
+            try:
+                b = bytes.fromhex(d['text'].replace(' ', ''))
+                res = decrypt_cbc_bytes(b, sbox).decode(errors='ignore')
+            except:
+                res = "[Decryption Error: Invalid Hex or Key]"
         return jsonify({"status": "success", "result": res})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -338,14 +383,14 @@ def process_text():
 @app.route('/api/process_image', methods=['POST'])
 def process_image():
     try:
-        f = request.files['image'];
+        f = request.files['image']
         sbox = [int(x) for x in request.form['sbox'].split(',')]
-        img = Image.open(f).convert('RGB');
+        img = Image.open(f).convert('RGB')
         b = img.tobytes()
-        proc = encrypt_cbc(b, sbox) if request.form['mode'] == 'encrypt' else decrypt_cbc(b, sbox)
-        res_img = Image.frombytes('RGB', img.size, bytes(proc));
-        buf = io.BytesIO();
-        res_img.save(buf, 'PNG');
+        proc = encrypt_cbc_bytes(b, sbox) if request.form['mode'] == 'encrypt' else decrypt_cbc_bytes(b, sbox)
+        res_img = Image.frombytes('RGB', img.size, bytes(proc))
+        buf = io.BytesIO()
+        res_img.save(buf, 'PNG')
         buf.seek(0)
         return jsonify({"status": "success", "image_b64": base64.b64encode(buf.getvalue()).decode()})
     except Exception as e:
