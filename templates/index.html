@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>S-Box Research Tool | Cryptography Project</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
-          rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -17,877 +16,150 @@
     <style>
         :root {
             /* THEME: Deep Space Grey */
-            --bg-body: #050507;
-            --bg-card: #12141a;
-            --bg-input: #0a0a0c;
-            --border-color: #2a2d35;
+            --bg-body: #050507; --bg-card: #12141a; --bg-input: #0a0a0c; --border-color: #2a2d35;
             /* ACCENT COLORS */
-            --primary: #66fcf1;
-            --primary-hover: #45a29e;
-            --success: #10b981;
-            --danger: #ef4444;
-            --text-main: #e0e6ed;
-            --text-muted: #94a3b8;
+            --primary: #66fcf1; --primary-hover: #45a29e; --success: #10b981; --danger: #ef4444;
+            --text-main: #e0e6ed; --text-muted: #94a3b8;
         }
 
-        html {
-            scroll-behavior: smooth;
-        }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; overflow-x: hidden; position: relative; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-        }
-
-        /* BACKGROUND & SCROLLBAR */
-        #constellation-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            pointer-events: none;
-            background: radial-gradient(circle at bottom, #1b2735 0%, #050507 100%);
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg-body);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary);
-        }
+        /* BACKGROUND */
+        #constellation-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; background: radial-gradient(circle at bottom, #1b2735 0%, #050507 100%); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
         /* ANIMATIONS */
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s ease-out;
-        }
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
 
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* GLITCH EFFECT FOR TITLE */
-        .glitch-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-
-        .glitch {
-            position: relative;
-            color: white;
-            mix-blend-mode: lighten;
-        }
-
-        .glitch::before, .glitch::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg-body);
-        }
-
-        .glitch::before {
-            left: 2px;
-            text-shadow: -1px 0 #ff00c1;
-            clip: rect(44px, 450px, 56px, 0);
-            animation: glitch-anim 5s infinite linear alternate-reverse;
-        }
-
-        .glitch::after {
-            left: -2px;
-            text-shadow: -1px 0 #00fff9;
-            clip: rect(44px, 450px, 56px, 0);
-            animation: glitch-anim2 5s infinite linear alternate-reverse;
-        }
-
-        @keyframes glitch-anim {
-            0% {
-                clip: rect(30px, 9999px, 10px, 0);
-            }
-            5% {
-                clip: rect(70px, 9999px, 90px, 0);
-            }
-            10%, 100% {
-                clip: rect(0, 0, 0, 0);
-            }
-        }
-
-        @keyframes glitch-anim2 {
-            0% {
-                clip: rect(10px, 9999px, 80px, 0);
-            }
-            5% {
-                clip: rect(5px, 9999px, 40px, 0);
-            }
-            10%, 100% {
-                clip: rect(0, 0, 0, 0);
-            }
-        }
+        /* GLITCH TITLE */
+        .glitch-wrapper { position: relative; display: inline-block; }
+        .glitch { position: relative; color: white; mix-blend-mode: lighten; }
+        .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; width: 100%; height: 100%; background: var(--bg-body); }
+        .glitch::before { left: 2px; text-shadow: -1px 0 #ff00c1; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim 5s infinite linear alternate-reverse; }
+        .glitch::after { left: -2px; text-shadow: -1px 0 #00fff9; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim2 5s infinite linear alternate-reverse; }
+        @keyframes glitch-anim { 0% { clip: rect(30px, 9999px, 10px, 0); } 5% { clip: rect(70px, 9999px, 90px, 0); } 10%, 100% { clip: rect(0,0,0,0); } }
+        @keyframes glitch-anim2 { 0% { clip: rect(10px, 9999px, 80px, 0); } 5% { clip: rect(5px, 9999px, 40px, 0); } 10%, 100% { clip: rect(0,0,0,0); } }
 
         /* COMPONENTS */
-        nav.navbar-custom {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            background: transparent;
-            padding: 1.5rem 0;
-        }
+        nav.navbar-custom { position: absolute; top: 0; left: 0; right: 0; z-index: 100; background: transparent; padding: 1.5rem 0; }
 
-        .tech-card {
-            background-color: rgba(18, 20, 26, 0.7);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
+        .tech-card { background-color: rgba(18, 20, 26, 0.7); border: 1px solid var(--border-color); border-radius: 16px; backdrop-filter: blur(12px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); overflow: hidden; transition: all 0.3s ease; }
+        .tech-card:hover { border-color: var(--primary); box-shadow: 0 0 25px rgba(102, 252, 241, 0.15); transform: translateY(-2px); }
 
-        .tech-card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 0 25px rgba(102, 252, 241, 0.15);
-            transform: translateY(-2px);
-        }
+        .card-header-tech { background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color); padding: 1rem 1.5rem; font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; gap: 10px; }
+        .card-header-tech i { color: var(--primary); filter: drop-shadow(0 0 5px var(--primary)); }
 
-        .card-header-tech {
-            background: rgba(255, 255, 255, 0.03);
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem 1.5rem;
-            font-size: 0.85rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .form-control, .form-select { background-color: var(--bg-input) !important; border: 1px solid var(--border-color) !important; color: var(--text-main) !important; font-family: 'Inter', sans-serif; font-size: 0.9rem; border-radius: 8px; padding: 0.7rem 1rem; transition: 0.3s; }
+        .form-control:focus, .form-select:focus { border-color: var(--primary) !important; box-shadow: 0 0 15px rgba(102, 252, 241, 0.2) !important; }
 
-        .card-header-tech i {
-            color: var(--primary);
-            filter: drop-shadow(0 0 5px var(--primary));
-        }
+        .btn-primary-tech { background: linear-gradient(135deg, var(--primary) 0%, #45a29e 100%); border: none; color: #0b0c10; font-weight: 800; padding: 12px 20px; border-radius: 8px; transition: all 0.3s; width: 100%; letter-spacing: 0.5px; position: relative; overflow: hidden; }
+        .btn-primary-tech::after { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); transition: 0.5s; }
+        .btn-primary-tech:hover::after { left: 100%; }
+        .btn-primary-tech:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 252, 241, 0.4); }
 
-        .form-control, .form-select {
-            background-color: var(--bg-input) !important;
-            border: 1px solid var(--border-color) !important;
-            color: var(--text-main) !important;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            border-radius: 8px;
-            padding: 0.7rem 1rem;
-            transition: 0.3s;
-        }
+        .btn-outline-tech { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; transition: 0.2s; }
+        .btn-outline-tech:hover { border-color: var(--primary); color: var(--primary); background: rgba(102, 252, 241, 0.05); }
+        .btn-outline-tech.active { background: rgba(102, 252, 241, 0.1); color: var(--primary); border-color: var(--primary); box-shadow: 0 0 10px rgba(102, 252, 241, 0.2); }
 
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 15px rgba(102, 252, 241, 0.2) !important;
-        }
+        /* GRID */
+        .grid-wrapper { position: relative; padding: 2px; border-radius: 9px; background: linear-gradient(45deg, #333, #111); overflow: hidden; }
+        .grid-wrapper::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(0deg, transparent, var(--primary), transparent); animation: rotate-border 4s linear infinite; opacity: 0; transition: 0.3s; }
+        .grid-wrapper:hover::before { opacity: 0.3; }
+        @keyframes rotate-border { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .btn-primary-tech {
-            background: linear-gradient(135deg, var(--primary) 0%, #45a29e 100%);
-            border: none;
-            color: #0b0c10;
-            font-weight: 800;
-            padding: 12px 20px;
-            border-radius: 8px;
-            transition: all 0.3s;
-            width: 100%;
-            letter-spacing: 0.5px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-primary-tech::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-            transition: 0.5s;
-        }
-
-        .btn-primary-tech:hover::after {
-            left: 100%;
-        }
-
-        .btn-primary-tech:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 252, 241, 0.4);
-        }
-
-        .btn-outline-tech {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            transition: 0.2s;
-        }
-
-        .btn-outline-tech:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            background: rgba(102, 252, 241, 0.05);
-        }
-
-        .btn-outline-tech.active {
-            background: rgba(102, 252, 241, 0.1);
-            color: var(--primary);
-            border-color: var(--primary);
-            box-shadow: 0 0 10px rgba(102, 252, 241, 0.2);
-        }
-
-        /* S-BOX VISUALIZER */
-        .grid-wrapper {
-            position: relative;
-            padding: 2px;
-            border-radius: 9px;
-            background: linear-gradient(45deg, #333, #111);
-            overflow: hidden;
-        }
-
-        .grid-wrapper::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(0deg, transparent, var(--primary), transparent);
-            animation: rotate-border 4s linear infinite;
-            opacity: 0;
-            transition: 0.3s;
-        }
-
-        .grid-wrapper:hover::before {
-            opacity: 0.3;
-        }
-
-        @keyframes rotate-border {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .grid-16 {
-            display: grid;
-            grid-template-columns: repeat(16, 1fr);
-            gap: 1px;
-            background: #000;
-            border-radius: 8px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .cell {
-            aspect-ratio: 1;
-            border-radius: 1px;
-            cursor: crosshair;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.55rem;
-            color: rgba(255, 255, 255, 0.8);
-            font-weight: 700;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-            opacity: 0;
-            animation: fade-in-cell 0.5s forwards;
-        }
-
-        @keyframes fade-in-cell {
-            from {
-                opacity: 0;
-                transform: scale(0.5);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .cell:hover {
-            transform: scale(1.8);
-            z-index: 100;
-            border: 1px solid var(--primary);
-            box-shadow: 0 0 20px var(--primary);
-            background-color: var(--bg-body) !important;
-            color: var(--primary);
-        }
+        .grid-16 { display: grid; grid-template-columns: repeat(16, 1fr); gap: 1px; background: #000; border-radius: 8px; position: relative; z-index: 1; }
+        .cell { aspect-ratio: 1; border-radius: 1px; cursor: crosshair; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; color: rgba(255, 255, 255, 0.8); font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.8); opacity: 0; animation: fade-in-cell 0.5s forwards; }
+        @keyframes fade-in-cell { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        .cell:hover { transform: scale(1.8); z-index: 100; border: 1px solid var(--primary); box-shadow: 0 0 20px var(--primary); background-color: var(--bg-body) !important; color: var(--primary); }
 
         /* METRICS & LAYOUT */
-        .metric-box {
-            background-color: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 1rem;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            transition: 0.3s;
-        }
+        .metric-box { background-color: var(--bg-input); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center; transition: 0.3s; }
+        .metric-box:hover { border-color: rgba(102, 252, 241, 0.3); background: rgba(102, 252, 241, 0.02); }
+        .m-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; font-weight: 600; }
+        .m-val { font-size: 1.5rem; font-weight: 700; color: white; font-family: 'JetBrains Mono'; line-height: 1; margin-bottom: 6px; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .m-target { font-size: 0.7rem; display: inline-block; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--text-muted); }
 
-        .metric-box:hover {
-            border-color: rgba(102, 252, 241, 0.3);
-            background: rgba(102, 252, 241, 0.02);
-        }
+        .nav-pills .nav-link { color: var(--text-muted); font-weight: 600; border-radius: 8px; padding: 0.7rem 1.2rem; margin-right: 5px; transition: 0.3s; }
+        .nav-pills .nav-link.active { background-color: rgba(102, 252, 241, 0.1); color: var(--primary); border: 1px solid var(--primary); box-shadow: 0 0 15px rgba(102, 252, 241, 0.2); }
 
-        .m-label {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
+        .table-tech { --bs-table-bg: transparent; --bs-table-color: var(--text-main); border-color: var(--border-color); }
+        .table-tech th { text-transform: uppercase; font-size: 0.75rem; color: var(--text-muted); padding: 15px; font-weight: 600; letter-spacing: 1px; }
+        .table-tech td { vertical-align: middle; padding: 15px; font-family: 'JetBrains Mono'; font-size: 0.9rem; }
+        .text-win { color: var(--success); font-weight: bold; text-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+        .text-lose { color: var(--text-muted); opacity: 0.5; }
+        .hidden { display: none !important; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
 
-        .m-val {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: white;
-            font-family: 'JetBrains Mono';
-            line-height: 1;
-            margin-bottom: 6px;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        }
+        .affine-grid-input, .constant-grid-input { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; margin-bottom: 1rem; }
+        .bit-btn { aspect-ratio: 1; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #444; transition: 0.2s; }
+        .bit-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .bit-btn.active { background: var(--primary); color: #0b0c10; font-weight: bold; border-color: var(--primary); box-shadow: 0 0 10px var(--primary); }
 
-        .m-target {
-            font-size: 0.7rem;
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-muted);
-        }
-
-        .nav-pills .nav-link {
-            color: var(--text-muted);
-            font-weight: 600;
-            border-radius: 8px;
-            padding: 0.7rem 1.2rem;
-            margin-right: 5px;
-            transition: 0.3s;
-        }
-
-        .nav-pills .nav-link.active {
-            background-color: rgba(102, 252, 241, 0.1);
-            color: var(--primary);
-            border: 1px solid var(--primary);
-            box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
-        }
-
-        .table-tech {
-            --bs-table-bg: transparent;
-            --bs-table-color: var(--text-main);
-            border-color: var(--border-color);
-        }
-
-        .table-tech th {
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            padding: 15px;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-
-        .table-tech td {
-            vertical-align: middle;
-            padding: 15px;
-            font-family: 'JetBrains Mono';
-            font-size: 0.9rem;
-        }
-
-        .text-win {
-            color: var(--success);
-            font-weight: bold;
-            text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
-        }
-
-        .text-lose {
-            color: var(--text-muted);
-            opacity: 0.5;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .font-mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .affine-grid-input, .constant-grid-input {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 4px;
-            margin-bottom: 1rem;
-        }
-
-        .bit-btn {
-            aspect-ratio: 1;
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            color: #444;
-            transition: 0.2s;
-        }
-
-        .bit-btn:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .bit-btn.active {
-            background: var(--primary);
-            color: #0b0c10;
-            font-weight: bold;
-            border-color: var(--primary);
-            box-shadow: 0 0 10px var(--primary);
-        }
-
-        #loader {
-            position: fixed;
-            inset: 0;
-            background: rgba(5, 5, 7, 0.95);
-            z-index: 9999;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            backdrop-filter: blur(5px);
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(102, 252, 241, 0.1);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s infinite linear;
-            box-shadow: 0 0 20px rgba(102, 252, 241, 0.2);
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
+        #loader { position: fixed; inset: 0; background: rgba(5, 5, 7, 0.95); z-index: 9999; display: none; justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(5px); }
+        .spinner { width: 50px; height: 50px; border: 3px solid rgba(102, 252, 241, 0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s infinite linear; box-shadow: 0 0 20px rgba(102, 252, 241, 0.2); }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         /* HERO & ORBIT */
-        .hero-section {
-            min-height: 100vh;
-            width: 100%;
-            background: transparent;
-            border-bottom: 1px solid var(--border-color);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            padding-top: 60px;
-        }
+        .hero-section { min-height: 100vh; width: 100%; background: transparent; border-bottom: 1px solid var(--border-color); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-direction: column; padding-top: 60px; }
+        .hero-bg-pattern { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 40px 40px; opacity: 0.05; z-index: 0; mask-image: linear-gradient(to bottom, black 40%, transparent 100%); }
+        .logo-orbit-wrapper { position: relative; display: flex; justify-content: center; align-items: center; width: 450px; height: 450px; margin: 0 auto; }
+        .unnes-logo-hero { position: relative; z-index: 10; max-height: 280px; width: auto; filter: drop-shadow(0 0 40px rgba(102, 252, 241, 0.4)); transition: transform 0.3s; }
+        .unnes-logo-hero:hover { transform: scale(1.05); }
+        .orbit { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; }
+        .orbit-1 { width: 340px; height: 340px; border: 1px solid rgba(102, 252, 241, 0.15); border-top-color: var(--primary); animation: spin-cw 8s linear infinite; }
+        .orbit-2 { width: 380px; height: 380px; border: 1px dashed rgba(102, 252, 241, 0.1); animation: spin-ccw 20s linear infinite; }
+        .orbit-3 { width: 420px; height: 420px; border: 1px solid rgba(255, 255, 255, 0.03); animation: spin-cw 15s linear infinite; }
+        .orbit-3::after { content: ''; position: absolute; top: 50px; left: 50px; width: 6px; height: 6px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 15px var(--primary); }
+        @keyframes spin-cw { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes spin-ccw { from { transform: translate(-50%, -50%) rotate(360deg); } to { transform: translate(-50%, -50%) rotate(0deg); } }
+        @media (max-width: 991px) { .logo-orbit-wrapper { transform: scale(0.65); margin-top: -50px; margin-bottom: -50px; } }
 
-        .hero-bg-pattern {
-            position: absolute;
-            inset: 0;
-            background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-            background-size: 40px 40px;
-            opacity: 0.05;
-            z-index: 0;
-            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
-        }
+        .feature-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 50px; font-size: 0.85rem; color: var(--text-muted); margin-right: 8px; margin-bottom: 8px; transition: 0.3s; backdrop-filter: blur(5px); }
+        .feature-pill:hover { border-color: var(--primary); color: white; background: rgba(102, 252, 241, 0.1); box-shadow: 0 0 15px rgba(102, 252, 241, 0.2); }
+        .scroll-down-btn { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); color: var(--text-muted); font-size: 1.5rem; cursor: pointer; animation: bounce 2s infinite; z-index: 10; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.3s; }
+        .scroll-down-btn:hover { color: var(--primary); text-shadow: 0 0 10px var(--primary); }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0) translateX(-50%);} 40% {transform: translateY(-10px) translateX(-50%);} 60% {transform: translateY(-5px) translateX(-50%);} }
 
-        .logo-orbit-wrapper {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 450px;
-            height: 450px;
-            margin: 0 auto;
-        }
+        /* ABSTRACT & RESEARCH OVERVIEW */
+        .abstract-section { padding: 8rem 0; background: transparent; }
+        .abstract-card { background: rgba(18, 20, 26, 0.6); border: 1px solid var(--border-color); border-radius: 20px; padding: 3rem; backdrop-filter: blur(12px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; }
+        .abstract-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--primary), transparent); }
+        .section-badge { display: inline-block; font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem; border: 1px solid rgba(102, 252, 241, 0.3); padding: 6px 12px; border-radius: 4px; }
+        .abstract-title { font-size: 2.5rem; font-weight: 800; color: white; margin-bottom: 1.5rem; line-height: 1.2; }
+        .abstract-text { font-size: 1.05rem; color: #c5c6c7; line-height: 1.8; margin-bottom: 0; }
 
-        .unnes-logo-hero {
-            position: relative;
-            z-index: 10;
-            max-height: 280px;
-            width: auto;
-            filter: drop-shadow(0 0 40px rgba(102, 252, 241, 0.4));
-            transition: transform 0.3s;
-        }
+        .pipeline-section { padding: 6rem 0; border-bottom: 1px solid var(--border-color); background-color: rgba(0,0,0,0.2); overflow: hidden; }
+        .pipeline-wrapper { display: flex; flex-direction: column; position: relative; margin-top: 3rem; align-items: center; }
+        .pipeline-wrapper::before { content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 100%; background: linear-gradient(180deg, transparent, var(--primary), transparent); transform: translateX(-50%); z-index: 0; opacity: 0.3; }
+        .pipeline-step { position: relative; z-index: 1; width: 50%; padding: 0 40px; margin-bottom: 4rem; display: flex; align-items: center; }
+        .pipeline-step:nth-child(odd) { align-self: flex-start; flex-direction: row-reverse; text-align: right; }
+        .pipeline-step:nth-child(even) { align-self: flex-end; flex-direction: row; text-align: left; }
+        .step-circle { width: 60px; height: 60px; flex-shrink: 0; background-color: var(--bg-body); border: 2px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: bold; font-size: 1.2rem; box-shadow: 0 0 20px rgba(102, 252, 241, 0.3); transition: 0.3s; z-index: 2; position: relative; }
+        .step-circle::before { content:''; position: absolute; inset: -5px; border-radius: 50%; border: 1px dashed rgba(102,252,241,0.3); animation: spin-cw 10s infinite linear; }
+        .step-content { background: rgba(18, 20, 26, 0.8); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 16px; flex-grow: 1; transition: 0.3s; position: relative; min-height: 120px; display: flex; flex-direction: column; justify-content: center; backdrop-filter: blur(10px); }
+        .pipeline-step:hover .step-content { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .step-title { color: white; font-size: 1.1rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px; }
+        .step-desc { color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; }
+        .step-highlight { color: var(--primary); font-weight: bold; font-family: 'JetBrains Mono'; text-shadow: 0 0 5px var(--primary); }
 
-        .unnes-logo-hero:hover {
-            transform: scale(1.05);
-        }
-
-        .orbit {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        .orbit-1 {
-            width: 340px;
-            height: 340px;
-            border: 1px solid rgba(102, 252, 241, 0.15);
-            border-top-color: var(--primary);
-            animation: spin-cw 8s linear infinite;
-        }
-
-        .orbit-2 {
-            width: 380px;
-            height: 380px;
-            border: 1px dashed rgba(102, 252, 241, 0.1);
-            animation: spin-ccw 20s linear infinite;
-        }
-
-        .orbit-3 {
-            width: 420px;
-            height: 420px;
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            animation: spin-cw 15s linear infinite;
-        }
-
-        .orbit-3::after {
-            content: '';
-            position: absolute;
-            top: 50px;
-            left: 50px;
-            width: 6px;
-            height: 6px;
-            background: var(--primary);
-            border-radius: 50%;
-            box-shadow: 0 0 15px var(--primary);
-        }
-
-        @keyframes spin-cw {
-            from {
-                transform: translate(-50%, -50%) rotate(0deg);
-            }
-            to {
-                transform: translate(-50%, -50%) rotate(360deg);
-            }
-        }
-
-        @keyframes spin-ccw {
-            from {
-                transform: translate(-50%, -50%) rotate(360deg);
-            }
-            to {
-                transform: translate(-50%, -50%) rotate(0deg);
-            }
-        }
+        .team-section { padding: 6rem 0; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.3); }
+        .team-card { background-color: rgba(18, 20, 26, 0.6); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden; text-align: center; transition: all 0.3s ease; height: 100%; backdrop-filter: blur(5px); }
+        .team-card:hover { transform: translateY(-10px); border-color: var(--primary); box-shadow: 0 15px 30px -10px rgba(102, 252, 241, 0.2); }
+        .team-card-img { width: 100%; height: 280px; object-fit: cover; object-position: top; border-bottom: 1px solid var(--border-color); filter: grayscale(50%); transition: 0.3s; }
+        .team-card:hover .team-card-img { filter: grayscale(0%); }
+        .team-name { font-size: 1.25rem; font-weight: 700; color: white; margin-bottom: 0.5rem; letter-spacing: 0.5px; }
+        .team-role { font-size: 0.85rem; color: var(--primary); font-weight: 700; text-transform: uppercase; margin-bottom: 0.8rem; letter-spacing: 1.5px; display: inline-block; border: 1px solid rgba(102,252,241,0.3); padding: 4px 10px; border-radius: 50px; }
+        .team-bio { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; font-style: italic; }
 
         @media (max-width: 991px) {
-            .logo-orbit-wrapper {
-                transform: scale(0.65);
-                margin-top: -50px;
-                margin-bottom: -50px;
-            }
-        }
-
-        .feature-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-right: 8px;
-            margin-bottom: 8px;
-            transition: 0.3s;
-            backdrop-filter: blur(5px);
-        }
-
-        .feature-pill:hover {
-            border-color: var(--primary);
-            color: white;
-            background: rgba(102, 252, 241, 0.1);
-            box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
-        }
-
-        .scroll-down-btn {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: var(--text-muted);
-            font-size: 1.5rem;
-            cursor: pointer;
-            animation: bounce 2s infinite;
-            z-index: 10;
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            transition: 0.3s;
-        }
-
-        .scroll-down-btn:hover {
-            color: var(--primary);
-            text-shadow: 0 0 10px var(--primary);
-        }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-                transform: translateY(0) translateX(-50%);
-            }
-            40% {
-                transform: translateY(-10px) translateX(-50%);
-            }
-            60% {
-                transform: translateY(-5px) translateX(-50%);
-            }
-        }
-
-        .pipeline-section {
-            padding: 6rem 0;
-            border-bottom: 1px solid var(--border-color);
-            background-color: rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-        }
-
-        .pipeline-wrapper {
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            margin-top: 3rem;
-            align-items: center;
-        }
-
-        .pipeline-wrapper::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 2px;
-            height: 100%;
-            background: linear-gradient(180deg, transparent, var(--primary), transparent);
-            transform: translateX(-50%);
-            z-index: 0;
-            opacity: 0.3;
-        }
-
-        .pipeline-step {
-            position: relative;
-            z-index: 1;
-            width: 50%;
-            padding: 0 40px;
-            margin-bottom: 4rem;
-            display: flex;
-            align-items: center;
-        }
-
-        .pipeline-step:nth-child(odd) {
-            align-self: flex-start;
-            flex-direction: row-reverse;
-            text-align: right;
-        }
-
-        .pipeline-step:nth-child(even) {
-            align-self: flex-end;
-            flex-direction: row;
-            text-align: left;
-        }
-
-        .step-circle {
-            width: 60px;
-            height: 60px;
-            flex-shrink: 0;
-            background-color: var(--bg-body);
-            border: 2px solid var(--primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary);
-            font-family: 'JetBrains Mono';
-            font-weight: bold;
-            font-size: 1.2rem;
-            box-shadow: 0 0 20px rgba(102, 252, 241, 0.3);
-            transition: 0.3s;
-            z-index: 2;
-            position: relative;
-        }
-
-        .step-circle::before {
-            content: '';
-            position: absolute;
-            inset: -5px;
-            border-radius: 50%;
-            border: 1px dashed rgba(102, 252, 241, 0.3);
-            animation: spin-cw 10s infinite linear;
-        }
-
-        .step-content {
-            background: rgba(18, 20, 26, 0.8);
-            border: 1px solid var(--border-color);
-            padding: 1.5rem;
-            border-radius: 16px;
-            flex-grow: 1;
-            transition: 0.3s;
-            position: relative;
-            min-height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .pipeline-step:hover .step-content {
-            border-color: var(--primary);
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .step-title {
-            color: white;
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-bottom: 0.5rem;
-            letter-spacing: 1px;
-        }
-
-        .step-desc {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            line-height: 1.6;
-        }
-
-        .step-highlight {
-            color: var(--primary);
-            font-weight: bold;
-            font-family: 'JetBrains Mono';
-            text-shadow: 0 0 5px var(--primary);
-        }
-
-        .team-section {
-            padding: 6rem 0;
-            border-top: 1px solid var(--border-color);
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        .team-card {
-            background-color: rgba(18, 20, 26, 0.6);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            overflow: hidden;
-            text-align: center;
-            transition: all 0.3s ease;
-            height: 100%;
-            backdrop-filter: blur(5px);
-        }
-
-        .team-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary);
-            box-shadow: 0 15px 30px -10px rgba(102, 252, 241, 0.2);
-        }
-
-        .team-card-img {
-            width: 100%;
-            height: 280px;
-            object-fit: cover;
-            object-position: top;
-            border-bottom: 1px solid var(--border-color);
-            filter: grayscale(50%);
-            transition: 0.3s;
-        }
-
-        .team-card:hover .team-card-img {
-            filter: grayscale(0%);
-        }
-
-        .team-name {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 0.5rem;
-            letter-spacing: 0.5px;
-        }
-
-        .team-role {
-            font-size: 0.85rem;
-            color: var(--primary);
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-bottom: 0.8rem;
-            letter-spacing: 1.5px;
-            display: inline-block;
-            border: 1px solid rgba(102, 252, 241, 0.3);
-            padding: 4px 10px;
-            border-radius: 50px;
-        }
-
-        .team-bio {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            line-height: 1.5;
-            font-style: italic;
-        }
-
-        @media (max-width: 991px) {
-            .pipeline-wrapper::before {
-                left: 30px;
-            }
-
-            .pipeline-step {
-                width: 100%;
-                padding: 0 0 0 70px;
-                flex-direction: row !important;
-                text-align: left !important;
-            }
-
-            .step-circle {
-                margin-right: 1.5rem;
-                position: absolute;
-                left: 0;
-                top: 0;
-            }
+            .pipeline-wrapper::before { left: 30px; }
+            .pipeline-step { width: 100%; padding: 0 0 0 70px; flex-direction: row !important; text-align: left !important; }
+            .step-circle { margin-right: 1.5rem; position: absolute; left: 0; top: 0; }
         }
     </style>
 </head>
@@ -907,11 +179,8 @@
             </div>
         </div>
         <div class="d-flex align-items-center gap-3">
-            <button onclick="exportReport()" id="exportBtn" class="btn btn-outline-tech hidden btn-sm px-3"><i
-                    class="fas fa-file-alt me-2"></i>Export Data
-            </button>
-            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2 rounded-pill font-mono"
-                  style="font-size: 0.75rem;"><i class="fas fa-code-branch me-1"></i>v9.0 Final</span>
+             <button onclick="exportReport()" id="exportBtn" class="btn btn-outline-tech hidden btn-sm px-3"><i class="fas fa-file-alt me-2"></i>Export Data</button>
+             <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2 rounded-pill font-mono" style="font-size: 0.75rem;"><i class="fas fa-code-branch me-1"></i>v9.0 Final</span>
         </div>
     </div>
 </nav>
@@ -925,15 +194,13 @@
                     <i class="fas fa-atom me-2"></i>Research by Alamsyah et al.
                 </span>
                 <div class="glitch-wrapper mb-3">
-                    <h1 class="display-3 fw-bold text-white glitch" data-text="AES S-Box Analysis System"
-                        style="line-height: 1.1; letter-spacing: -1px;">
+                    <h1 class="display-3 fw-bold text-white glitch" data-text="AES S-Box Analysis System" style="line-height: 1.1; letter-spacing: -1px;">
                         AES S-Box Analysis System
                     </h1>
                 </div>
                 <p class="lead text-muted mb-5" style="font-weight: 300; max-width: 600px;">
                     Advanced cryptographic evaluation tool for Substitution Boxes.
-                    Explore the <span class="text-white">Affine Matrix Space</span> with real-time analysis of
-                    Non-linearity, SAC, and Entropy.
+                    Explore the <span class="text-white">Affine Matrix Space</span> with real-time analysis of Non-linearity, SAC, and Entropy.
                 </p>
                 <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-2">
                     <div class="feature-pill"><i class="fas fa-university"></i> UNNES</div>
@@ -944,113 +211,63 @@
             </div>
             <div class="col-lg-5 text-center reveal">
                 <div class="logo-orbit-wrapper">
-                    <div class="orbit orbit-1"></div>
-                    <div class="orbit orbit-2"></div>
-                    <div class="orbit orbit-3"></div>
-                    <img src="https://unnes.ac.id/lppm/wp-content/uploads/sites/16/2015/08/Logo-Transparan-Warna-1.png"
-                         alt="UNNES Logo" class="unnes-logo-hero">
+                    <div class="orbit orbit-1"></div><div class="orbit orbit-2"></div><div class="orbit orbit-3"></div>
+                    <img src="https://unnes.ac.id/lppm/wp-content/uploads/sites/16/2015/08/Logo-Transparan-Warna-1.png" alt="UNNES Logo" class="unnes-logo-hero">
                 </div>
             </div>
         </div>
     </div>
-    <a href="#pipeline-section" class="scroll-down-btn"><span>Start Exploring</span><i
-            class="fas fa-chevron-down mt-1"></i></a>
+    <a href="#abstract-section" class="scroll-down-btn"><span>Start Exploring</span><i class="fas fa-chevron-down mt-1"></i></a>
 </header>
 
-<section class="team-section reveal">
+<section class="abstract-section reveal" id="abstract-section">
     <div class="container">
-        <div class="text-center mb-5"><h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">Meet The
-            Explorers</h6>
-            <h2 class="fw-bold text-white mb-3">Research Team</h2>
-            <p class="text-muted mx-auto" style="max-width: 600px;">Para pejuang yang selamat dari mata kuliah
-                kriptografi</p></div>
-        <div class="row g-4 justify-content-center">
-            <div class="col-md-6 col-lg-3">
-                <div class="team-card"><img src="/static/img/zuh.jpg" alt="Member" class="team-card-img">
-                    <div class="team-card-body"><h5 class="team-name">M. Mishbakhuz Zuhail</h5>
-                        <div class="team-role">SI BALINAN</div>
-                        <p class="team-bio">"Andai gw bisa ngoding, pasti diajak projek sama zuh"</p></div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="team-card"><img src="/static/img/jeki.jpg" alt="Member" class="team-card-img">
-                    <div class="team-card-body"><h5 class="team-name">Ahmad Muzakki Ahsan</h5>
-                        <div class="team-role">WALI MURID</div>
-                        <p class="team-bio">"woy kuncir"</p></div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="team-card"><img src="/static/img/gweh.jpg" alt="Member" class="team-card-img">
-                    <div class="team-card-body"><h5 class="team-name">Sheva Aqila Ramadhan</h5>
-                        <div class="team-role">MC</div>
-                        <p class="team-bio">"belajar menggambar demi bisa gambar myistri sepuasnya"</p></div>
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="abstract-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <span class="section-badge"><i class="fas fa-microscope me-2"></i>Research Overview</span>
+                            <h2 class="abstract-title">Navigating the <span style="color: var(--primary)">Chaos</span>.</h2>
+                            <p class="abstract-text">
+                                The standard AES S-Box is robust, but is it unique? This research delves into the <strong class="text-white">Affine Transformation</strong> space, a mathematical cosmos of <strong class="text-white">2⁶⁴ possibilities</strong>.
+                            </p>
+                            <br>
+                            <p class="abstract-text">
+                                By systematically generating and filtering millions of candidates against strict cryptographic properties (Bijective, Balanced, Nonlinearity), we isolate <strong>S-Box K44</strong>—a rare variant that rivals AES in strength while offering distinct structural advantages for modern encryption standards.
+                            </p>
+                        </div>
+                        <div class="col-md-5 text-center d-none d-md-block">
+                            <i class="fas fa-atom fa-10x" style="color: rgba(102, 252, 241, 0.1); filter: drop-shadow(0 0 20px var(--primary));"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
+<section class="team-section reveal">
+    <div class="container">
+        <div class="text-center mb-5"><h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">Meet The Explorers</h6><h2 class="fw-bold text-white mb-3">Research Team</h2><p class="text-muted mx-auto" style="max-width: 600px;">Para pejuang yang selamat dari mata kuliah kriptografi</p></div>
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-6 col-lg-3"><div class="team-card"><img src="/static/img/zuh.jpg" alt="Member" class="team-card-img"><div class="team-card-body"><h5 class="team-name">M. Mishbakhuz Zuhail</h5><div class="team-role">SI BALINAN</div><p class="team-bio">"Andai gw bisa ngoding, pasti diajak projek sama zuh"</p></div></div></div>
+            <div class="col-md-6 col-lg-3"><div class="team-card"><img src="/static/img/jeki.jpg" alt="Member" class="team-card-img"><div class="team-card-body"><h5 class="team-name">Ahmad Muzakki Ahsan</h5><div class="team-role">WALI MURID</div><p class="team-bio">"woy kuncir"</p></div></div></div>
+            <div class="col-md-6 col-lg-3"><div class="team-card"><img src="/static/img/gweh.jpg" alt="Member" class="team-card-img"><div class="team-card-body"><h5 class="team-name">Sheva Aqila Ramadhan</h5><div class="team-role">MC</div><p class="team-bio">"belajar menggambar demi bisa gambar myistri sepuasnya"</p></div></div></div>
+        </div>
+    </div>
+</section>
+
 <section class="pipeline-section reveal" id="pipeline-section">
     <div class="container">
-        <div class="text-center mb-5"><h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">
-            Methodology</h6>
-            <h2 class="fw-bold text-white">Exploration Pipeline</h2>
-            <p class="text-muted small">Based on paper DOI: 10.1007/s11071-024-10414-3</p></div>
+        <div class="text-center mb-5"><h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">Methodology</h6><h2 class="fw-bold text-white">Exploration Pipeline</h2><p class="text-muted small">Based on paper DOI: 10.1007/s11071-024-10414-3</p></div>
         <div class="pipeline-wrapper">
-            <div class="pipeline-step">
-                <div class="step-circle">1</div>
-                <div class="step-content">
-                    <div class="step-title">Affine Matrix Space</div>
-                    <div class="step-desc">Menentukan matriks affine 8x8. Kombinasi bit ini membentuk ruang pencarian
-                        luas <span class="step-highlight">2⁶⁴</span>.
-                    </div>
-                </div>
-            </div>
-            <div class="pipeline-step">
-                <div class="step-circle">2</div>
-                <div class="step-content">
-                    <div class="step-title">Transformation</div>
-                    <div class="step-desc">Inverse pada GF(2⁸) dengan polinomial irreduksibel <span
-                            class="step-highlight">0x11B</span> + transformasi linear.
-                    </div>
-                </div>
-            </div>
-            <div class="pipeline-step">
-                <div class="step-circle">3</div>
-                <div class="step-content">
-                    <div class="step-title">S-Box Generation</div>
-                    <div class="step-desc">Setiap kombinasi matriks & konstanta menghasilkan tabel S-Box berisi 256
-                        nilai unik (0-255).
-                    </div>
-                </div>
-            </div>
-            <div class="pipeline-step">
-                <div class="step-circle">4</div>
-                <div class="step-content">
-                    <div class="step-title">Validation</div>
-                    <div class="step-desc">Seleksi ketat. Hanya <span class="step-highlight">128 S-Box</span> yang
-                        memenuhi kriteria Balanced & Bijective yang lolos.
-                    </div>
-                </div>
-            </div>
-            <div class="pipeline-step">
-                <div class="step-circle">5</div>
-                <div class="step-content">
-                    <div class="step-title">Metric Suite</div>
-                    <div class="step-desc">Pengujian otomatis 10 metrik kriptografi: NL, SAC, BIC, Transparency Order,
-                        dll.
-                    </div>
-                </div>
-            </div>
-            <div class="pipeline-step">
-                <div class="step-circle">6</div>
-                <div class="step-content">
-                    <div class="step-title">Result (K44)</div>
-                    <div class="step-desc">Penentuan pemenang berdasarkan nilai terbaik. <span class="step-highlight">K44</span>
-                        terpilih sebagai kandidat terkuat.
-                    </div>
-                </div>
-            </div>
+            <div class="pipeline-step"><div class="step-circle">1</div><div class="step-content"><div class="step-title">Affine Matrix Space</div><div class="step-desc">Menentukan matriks affine 8x8. Kombinasi bit ini membentuk ruang pencarian luas <span class="step-highlight">2⁶⁴</span>.</div></div></div>
+            <div class="pipeline-step"><div class="step-circle">2</div><div class="step-content"><div class="step-title">Transformation</div><div class="step-desc">Inverse pada GF(2⁸) dengan polinomial irreduksibel <span class="step-highlight">0x11B</span> + transformasi linear.</div></div></div>
+            <div class="pipeline-step"><div class="step-circle">3</div><div class="step-content"><div class="step-title">S-Box Generation</div><div class="step-desc">Setiap kombinasi matriks & konstanta menghasilkan tabel S-Box berisi 256 nilai unik (0-255).</div></div></div>
+            <div class="pipeline-step"><div class="step-circle">4</div><div class="step-content"><div class="step-title">Validation</div><div class="step-desc">Seleksi ketat. Hanya <span class="step-highlight">128 S-Box</span> yang memenuhi kriteria Balanced & Bijective yang lolos.</div></div></div>
+            <div class="pipeline-step"><div class="step-circle">5</div><div class="step-content"><div class="step-title">Metric Suite</div><div class="step-desc">Pengujian otomatis 10 metrik kriptografi: NL, SAC, BIC, Transparency Order, dll.</div></div></div>
+            <div class="pipeline-step"><div class="step-circle">6</div><div class="step-content"><div class="step-title">Result (K44)</div><div class="step-desc">Penentuan pemenang berdasarkan nilai terbaik. <span class="step-highlight">K44</span> terpilih sebagai kandidat terkuat.</div></div></div>
         </div>
     </div>
 </section>
@@ -1062,12 +279,8 @@
                 <div class="card-header-tech"><i class="fas fa-cog"></i> Configuration Panel</div>
                 <div class="p-4">
                     <div class="d-flex gap-2 mb-4 p-1 bg-black rounded border border-secondary border-opacity-25">
-                        <button class="btn btn-outline-tech w-50 active btn-sm" onclick="switchMode('db')"
-                                id="btn-mode-db">Database
-                        </button>
-                        <button class="btn btn-outline-tech w-50 btn-sm" onclick="switchMode('custom')"
-                                id="btn-mode-custom">Laboratory
-                        </button>
+                        <button class="btn btn-outline-tech w-50 active btn-sm" onclick="switchMode('db')" id="btn-mode-db">Database</button>
+                        <button class="btn btn-outline-tech w-50 btn-sm" onclick="switchMode('custom')" id="btn-mode-custom">Laboratory</button>
                     </div>
 
                     <div id="mode-db-container">
@@ -1081,12 +294,9 @@
                             <label class="m-label mb-2">OR UPLOAD EXCEL</label>
                             <div class="input-group">
                                 <input type="file" id="excelInput" class="form-control" accept=".xlsx, .xls">
-                                <button class="btn btn-outline-tech" type="button" onclick="uploadExcel()"><i
-                                        class="fas fa-upload"></i></button>
+                                <button class="btn btn-outline-tech" type="button" onclick="uploadExcel()"><i class="fas fa-upload"></i></button>
                             </div>
-                            <div class="small text-muted mt-1" style="font-size: 0.65rem;">Format: 16x16 grid or list of
-                                256 integers.
-                            </div>
+                            <div class="small text-muted mt-1" style="font-size: 0.65rem;">Format: 16x16 grid or list of 256 integers.</div>
                         </div>
                     </div>
 
@@ -1094,9 +304,7 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <label class="m-label">AFFINE MATRIX (8x8)</label>
-                                <button onclick="resetMatrix()" class="btn btn-link btn-sm text-muted p-0"
-                                        style="font-size: 0.7rem;">Reset
-                                </button>
+                                <button onclick="resetMatrix()" class="btn btn-link btn-sm text-muted p-0" style="font-size: 0.7rem;">Reset</button>
                             </div>
                             <div class="affine-grid-input" id="input-matrix"></div>
                         </div>
@@ -1104,9 +312,7 @@
                             <label class="m-label mb-2">ADDITIVE CONSTANT (C)</label>
                             <div class="constant-grid-input" id="input-constant"></div>
                         </div>
-                        <button onclick="generateCustomSBox()" class="btn btn-primary-tech mb-3"><i
-                                class="fas fa-microchip me-2"></i>Generate S-Box
-                        </button>
+                        <button onclick="generateCustomSBox()" class="btn btn-primary-tech mb-3"><i class="fas fa-microchip me-2"></i>Generate S-Box</button>
                     </div>
 
                     <div class="mb-4">
@@ -1119,8 +325,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-black rounded p-3 mb-4 border border-secondary border-opacity-25 font-mono"
-                         style="font-size: 0.85rem;">
+                    <div class="bg-black rounded p-3 mb-4 border border-secondary border-opacity-25 font-mono" style="font-size: 0.85rem;">
                         <div class="d-flex justify-content-between border-bottom border-secondary border-opacity-25 pb-2 mb-2">
                             <span class="text-muted">INDEX</span><span class="text-white" id="insp-idx">-</span>
                         </div>
@@ -1128,19 +333,16 @@
                             <span class="text-muted">VALUE (DEC)</span><span class="text-white" id="insp-dec">-</span>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span class="text-muted">BINARY</span><span style="color: var(--primary);"
-                                                                        id="insp-bin">-</span>
+                            <span class="text-muted">BINARY</span><span style="color: var(--primary);" id="insp-bin">-</span>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <button class="btn btn-link btn-sm text-muted text-decoration-none p-0 mb-2" type="button"
-                                data-bs-toggle="collapse" data-bs-target="#manualBox">
+                        <button class="btn btn-link btn-sm text-muted text-decoration-none p-0 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#manualBox">
                             <i class="fas fa-edit me-1"></i> Manual Input (Text)
                         </button>
                         <div class="collapse" id="manualBox">
-                            <textarea id="sboxInput" class="form-control font-mono" style="font-size: 0.8rem;" rows="3"
-                                      placeholder="Paste 256 integers..."></textarea>
+                            <textarea id="sboxInput" class="form-control font-mono" style="font-size: 0.8rem;" rows="3" placeholder="Paste 256 integers..."></textarea>
                         </div>
                     </div>
 
@@ -1151,21 +353,9 @@
 
         <div class="col-lg-8" id="contentCol">
             <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
-                <li class="nav-item">
-                    <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-metrics"
-                            onclick="toggleSidebar(true)">Dashboard
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-compare"
-                            onclick="toggleSidebar(false)">Comparison
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-crypto"
-                            onclick="toggleSidebar(true)">Encryption Test
-                    </button>
-                </li>
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-metrics" onclick="toggleSidebar(true)">Dashboard</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-compare" onclick="toggleSidebar(false)">Comparison</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-crypto" onclick="toggleSidebar(true)">Encryption Test</button></li>
             </ul>
 
             <div class="tab-content">
@@ -1178,108 +368,19 @@
 
                     <div id="results" class="hidden">
                         <div class="row g-3">
-                            <div class="col-md-3 col-6">
-                                <div class="metric-box">
-                                    <div class="m-label">Nonlinearity</div>
-                                    <div class="m-val" id="resNL">-</div>
-                                    <div class="m-target">Max: 112</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="metric-box">
-                                    <div class="m-label">SAC</div>
-                                    <div class="m-val" id="resSAC">-</div>
-                                    <div class="m-target">Ideal: 0.5</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="metric-box">
-                                    <div class="m-label">Diff. Unif</div>
-                                    <div class="m-val" id="resDU">-</div>
-                                    <div class="m-target">Ideal: 4</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="metric-box">
-                                    <div class="m-label">Alg. Degree</div>
-                                    <div class="m-val" id="resAD">-</div>
-                                    <div class="m-target">Max: 7</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="metric-box">
-                                    <div class="m-label">BIC-NL</div>
-                                    <div class="m-val" id="resBIC">-</div>
-                                    <div class="m-target">High</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="metric-box">
-                                    <div class="m-label">BIC-SAC</div>
-                                    <div class="m-val" id="resBICSAC">-</div>
-                                    <div class="m-target">Ideal: 0.5</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="metric-box">
-                                    <div class="m-label">Fixed Points</div>
-                                    <div class="m-val" id="resFIXED">-</div>
-                                    <div class="m-target">Target: 0</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="metric-box">
-                                    <div class="m-label">Max Cycle</div>
-                                    <div class="m-val" id="resCYCMAX">-</div>
-                                    <div class="m-target">Target: 256</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="metric-box">
-                                    <div class="m-label">Transparency</div>
-                                    <div class="m-val" id="resTO">-</div>
-                                    <div class="m-target">Minimize</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="metric-box">
-                                    <div class="m-label">Corr. Immune</div>
-                                    <div class="m-val" id="resCI">-</div>
-                                    <div class="m-target">Max</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="metric-box">
-                                    <div class="m-label">Linear Approx</div>
-                                    <div class="m-val" id="resLAP">-</div>
-                                    <div class="m-target">Min Bias</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="metric-box">
-                                    <div class="m-label">Diff Approx</div>
-                                    <div class="m-val" id="resDAP">-</div>
-                                    <div class="m-target">Min Prob</div>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="metric-box"
-                                     style="border-color: var(--success); background: rgba(16, 185, 129, 0.05);">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <div class="m-label" style="color: var(--success);">STRENGTH VALUE (SV)
-                                            </div>
-                                            <div class="small text-muted">Combined score based on NL, SAC, and BIC.
-                                                Lower is better.
-                                            </div>
-                                        </div>
-                                        <div class="text-end">
-                                            <div class="m-val" style="color: var(--success);" id="resSV">-</div>
-                                            <div class="m-target">Ideal: 0</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <div class="col-md-3 col-6"><div class="metric-box"><div class="m-label">Nonlinearity</div><div class="m-val" id="resNL">-</div><div class="m-target">Max: 112</div></div></div>
+                            <div class="col-md-3 col-6"><div class="metric-box"><div class="m-label">SAC</div><div class="m-val" id="resSAC">-</div><div class="m-target">Ideal: 0.5</div></div></div>
+                            <div class="col-md-3 col-6"><div class="metric-box"><div class="m-label">Diff. Unif</div><div class="m-val" id="resDU">-</div><div class="m-target">Ideal: 4</div></div></div>
+                            <div class="col-md-3 col-6"><div class="metric-box"><div class="m-label">Alg. Degree</div><div class="m-val" id="resAD">-</div><div class="m-target">Max: 7</div></div></div>
+                            <div class="col-md-3 col-6"><div class="metric-box"><div class="m-label">BIC-NL</div><div class="m-val" id="resBIC">-</div><div class="m-target">High</div></div></div>
+                            <div class="col-md-3 col-6"><div class="metric-box"><div class="m-label">BIC-SAC</div><div class="m-val" id="resBICSAC">-</div><div class="m-target">Ideal: 0.5</div></div></div>
+                            <div class="col-md-3 col-6"><div class="metric-box"><div class="m-label">Fixed Points</div><div class="m-val" id="resFIXED">-</div><div class="m-target">Target: 0</div></div></div>
+                            <div class="col-md-3 col-6"><div class="metric-box"><div class="m-label">Max Cycle</div><div class="m-val" id="resCYCMAX">-</div><div class="m-target">Target: 256</div></div></div>
+                            <div class="col-md-3 col-6"><div class="metric-box"><div class="m-label">Transparency</div><div class="m-val" id="resTO">-</div><div class="m-target">Minimize</div></div></div>
+                            <div class="col-md-3 col-6"><div class="metric-box"><div class="m-label">Corr. Immune</div><div class="m-val" id="resCI">-</div><div class="m-target">Max</div></div></div>
+                            <div class="col-md-3 col-6"><div class="metric-box"><div class="m-label">Linear Approx</div><div class="m-val" id="resLAP">-</div><div class="m-target">Min Bias</div></div></div>
+                            <div class="col-md-3 col-6"><div class="metric-box"><div class="m-label">Diff Approx</div><div class="m-val" id="resDAP">-</div><div class="m-target">Min Prob</div></div></div>
+                            <div class="col-12"><div class="metric-box" style="border-color: var(--success); background: rgba(16, 185, 129, 0.05);"><div class="d-flex justify-content-between align-items-center"><div><div class="m-label" style="color: var(--success);">STRENGTH VALUE (SV)</div><div class="small text-muted">Combined score based on NL, SAC, and BIC. Lower is better.</div></div><div class="text-end"><div class="m-val" style="color: var(--success);" id="resSV">-</div><div class="m-target">Ideal: 0</div></div></div></div></div>
                         </div>
                     </div>
                 </div>
@@ -1289,41 +390,16 @@
                         <div class="card-header-tech"><i class="fas fa-balance-scale"></i> Direct Comparison</div>
                         <div class="p-4">
                             <div class="row g-3 align-items-end mb-4">
-                                <div class="col-md-5"><label class="m-label mb-1">REFERENCE (A)</label><select
-                                        id="compSelectA" class="form-select"></select></div>
-                                <div class="col-md-5"><label class="m-label mb-1">CANDIDATE (B)</label><select
-                                        id="compSelectB" class="form-select"></select></div>
-                                <div class="col-md-2">
-                                    <button onclick="runComparison()" class="btn btn-primary-tech"><i
-                                            class="fas fa-play"></i></button>
-                                </div>
+                                <div class="col-md-5"><label class="m-label mb-1">REFERENCE (A)</label><select id="compSelectA" class="form-select"></select></div>
+                                <div class="col-md-5"><label class="m-label mb-1">CANDIDATE (B)</label><select id="compSelectB" class="form-select"></select></div>
+                                <div class="col-md-2"><button onclick="runComparison()" class="btn btn-primary-tech"><i class="fas fa-play"></i></button></div>
                             </div>
                             <div class="row mb-4">
                                 <div class="col-md-8 offset-md-2">
-                                    <div style="height: 300px; width: 100%;">
-                                        <canvas id="radarChart"></canvas>
-                                    </div>
+                                    <div style="height: 300px; width: 100%;"><canvas id="radarChart"></canvas></div>
                                 </div>
                             </div>
-                            <div class="table-responsive">
-                                <table class="table table-tech align-middle">
-                                    <thead>
-                                    <tr>
-                                        <th style="width: 30%;">Metric</th>
-                                        <th style="width: 25%;" class="text-center">Reference</th>
-                                        <th style="width: 25%;" class="text-center">Candidate</th>
-                                        <th style="width: 20%;" class="text-center">Result</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="comparisonTableBody">
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted py-5">Select two S-Boxes above to
-                                            compare.
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                            <div class="table-responsive"><table class="table table-tech align-middle"><thead><tr><th style="width: 30%;">Metric</th><th style="width: 25%;" class="text-center">Reference</th><th style="width: 25%;" class="text-center">Candidate</th><th style="width: 20%;" class="text-center">Result</th></tr></thead><tbody id="comparisonTableBody"><tr><td colspan="4" class="text-center text-muted py-5">Select two S-Boxes above to compare.</td></tr></tbody></table></div>
                         </div>
                     </div>
                 </div>
@@ -1333,126 +409,68 @@
                         <div class="card-header-tech"><i class="fas fa-font"></i> Text Encryption</div>
                         <div class="p-4">
                             <div class="row g-3">
-                                <div class="col-md-6"><label class="m-label">INPUT TEXT</label><input type="text"
-                                                                                                      id="txtInput"
-                                                                                                      class="form-control mt-1"
-                                                                                                      placeholder="Type secret message...">
-                                </div>
-                                <div class="col-md-6"><label class="m-label">OUTPUT (HEX/TEXT)</label><input type="text"
-                                                                                                             id="txtResult"
-                                                                                                             class="form-control mt-1"
-                                                                                                             style="color: var(--success) !important;"
-                                                                                                             readonly>
-                                </div>
+                                <div class="col-md-6"><label class="m-label">INPUT TEXT</label><input type="text" id="txtInput" class="form-control mt-1" placeholder="Type secret message..."></div>
+                                <div class="col-md-6"><label class="m-label">OUTPUT (HEX/TEXT)</label><input type="text" id="txtResult" class="form-control mt-1" style="color: var(--success) !important;" readonly></div>
                             </div>
-                            <div class="d-flex gap-2 mt-3">
-                                <button onclick="doText('encrypt')" class="btn btn-outline-tech w-50"><i
-                                        class="fas fa-lock me-2"></i>Encrypt
-                                </button>
-                                <button onclick="doText('decrypt')" class="btn btn-outline-tech w-50"><i
-                                        class="fas fa-unlock me-2"></i>Decrypt
-                                </button>
-                            </div>
+                            <div class="d-flex gap-2 mt-3"><button onclick="doText('encrypt')" class="btn btn-outline-tech w-50"><i class="fas fa-lock me-2"></i>Encrypt</button><button onclick="doText('decrypt')" class="btn btn-outline-tech w-50"><i class="fas fa-unlock me-2"></i>Decrypt</button></div>
                         </div>
                     </div>
 
                     <div class="tech-card">
                         <div class="card-header-tech"><i class="fas fa-image"></i> Image Encryption (CBC Mode)</div>
                         <div class="p-4">
-                            <div class="input-group mb-3"><input type="file" id="imgInput" class="form-control"
-                                                                 accept="image/*"></div>
+                            <div class="input-group mb-3"><input type="file" id="imgInput" class="form-control" accept="image/*"></div>
                             <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <button onclick="doImage('encrypt')" class="btn btn-outline-tech w-100">Encrypt
-                                        Image
-                                    </button>
-                                </div>
-                                <div class="col-6">
-                                    <button onclick="doImage('decrypt')" class="btn btn-outline-tech w-100">Decrypt
-                                        Image
-                                    </button>
-                                </div>
+                                <div class="col-6"><button onclick="doImage('encrypt')" class="btn btn-outline-tech w-100">Encrypt Image</button></div>
+                                <div class="col-6"><button onclick="doImage('decrypt')" class="btn btn-outline-tech w-100">Decrypt Image</button></div>
                             </div>
-                            <div id="imgPreviewArea"
-                                 class="hidden text-center p-3 bg-black rounded border border-secondary border-opacity-25 mt-3">
+                            <div id="imgPreviewArea" class="hidden text-center p-3 bg-black rounded border border-secondary border-opacity-25 mt-3">
                                 <div class="row">
                                     <div class="col-md-5 d-flex flex-column align-items-center">
-                                        <img id="imgResult" class="img-fluid mb-2"
-                                             style="max-height: 250px; border-radius: 4px; border: 1px solid #333;">
-                                        <a id="dlBtn" class="btn btn-sm btn-primary-tech mt-2 w-100"
-                                           download="result.png"><i class="fas fa-download me-2"></i>Download</a>
+                                        <img id="imgResult" class="img-fluid mb-2" style="max-height: 250px; border-radius: 4px; border: 1px solid #333;">
+                                        <a id="dlBtn" class="btn btn-sm btn-primary-tech mt-2 w-100" download="result.png"><i class="fas fa-download me-2"></i>Download</a>
                                     </div>
                                     <div class="col-md-7">
                                         <div id="statsPanel" class="text-start hidden">
                                             <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-1 mb-2">
                                                 <h6 class="text-primary small fw-bold mb-0">HISTOGRAM ANALYSIS</h6>
-                                                <button onclick="resetChartZoom()"
-                                                        class="btn btn-link btn-sm text-muted p-0"
-                                                        style="font-size: 0.65rem; text-decoration: none;"><i
-                                                        class="fas fa-search-minus me-1"></i>Reset Zoom
-                                                </button>
+                                                <button onclick="resetChartZoom()" class="btn btn-link btn-sm text-muted p-0" style="font-size: 0.65rem; text-decoration: none;"><i class="fas fa-search-minus me-1"></i>Reset Zoom</button>
                                             </div>
 
-                                            <div style="height: 150px; width: 100%; position: relative;">
-                                                <canvas id="histChart"></canvas>
-                                            </div>
-                                            <div class="text-center text-muted fst-italic mt-1"
-                                                 style="font-size: 0.6rem;">*Scroll/Pinch to Zoom, Drag to Pan
-                                            </div>
+                                            <div style="height: 150px; width: 100%; position: relative;"><canvas id="histChart"></canvas></div>
+                                            <div class="text-center text-muted fst-italic mt-1" style="font-size: 0.6rem;">*Scroll/Pinch to Zoom, Drag to Pan</div>
 
-                                            <h6 class="text-primary small fw-bold mt-3 mb-2 border-bottom border-secondary pb-1">
-                                                QUALITY METRICS</h6>
+                                            <h6 class="text-primary small fw-bold mt-3 mb-2 border-bottom border-secondary pb-1">QUALITY METRICS</h6>
 
                                             <div class="row g-2">
                                                 <div class="col-4">
-                                                    <div class="bg-dark rounded p-2 text-center border border-secondary"
-                                                         style="border-color: #333 !important;">
-                                                        <div class="text-muted"
-                                                             style="font-size:0.6rem; letter-spacing: 1px;">ENTROPY
-                                                        </div>
-                                                        <div id="val-entropy"
-                                                             class="text-white small fw-bold font-mono">-
-                                                        </div>
+                                                    <div class="bg-dark rounded p-2 text-center border border-secondary" style="border-color: #333 !important;">
+                                                        <div class="text-muted" style="font-size:0.6rem; letter-spacing: 1px;">ENTROPY</div>
+                                                        <div id="val-entropy" class="text-white small fw-bold font-mono">-</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-4">
-                                                    <div class="bg-dark rounded p-2 text-center border border-secondary"
-                                                         style="border-color: #333 !important;">
-                                                        <div class="text-muted"
-                                                             style="font-size:0.6rem; letter-spacing: 1px;">NPCR
-                                                        </div>
-                                                        <div id="val-npcr" class="text-white small fw-bold font-mono">
-                                                            -
-                                                        </div>
+                                                    <div class="bg-dark rounded p-2 text-center border border-secondary" style="border-color: #333 !important;">
+                                                        <div class="text-muted" style="font-size:0.6rem; letter-spacing: 1px;">NPCR</div>
+                                                        <div id="val-npcr" class="text-white small fw-bold font-mono">-</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-4">
-                                                    <div class="bg-dark rounded p-2 text-center border border-secondary"
-                                                         style="border-color: #333 !important;">
-                                                        <div class="text-muted"
-                                                             style="font-size:0.6rem; letter-spacing: 1px;">UACI
-                                                        </div>
-                                                        <div id="val-uaci" class="text-white small fw-bold font-mono">
-                                                            -
-                                                        </div>
+                                                    <div class="bg-dark rounded p-2 text-center border border-secondary" style="border-color: #333 !important;">
+                                                        <div class="text-muted" style="font-size:0.6rem; letter-spacing: 1px;">UACI</div>
+                                                        <div id="val-uaci" class="text-white small fw-bold font-mono">-</div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div class="bg-dark rounded p-2 border border-secondary mt-2"
-                                                 style="border-color: #333 !important;">
-                                                <div class="text-muted mb-1 text-center"
-                                                     style="font-size:0.65rem; letter-spacing: 1px;">PIXEL CORRELATION
-                                                    (H / V / D)
-                                                </div>
+                                            <div class="bg-dark rounded p-2 border border-secondary mt-2" style="border-color: #333 !important;">
+                                                <div class="text-muted mb-1 text-center" style="font-size:0.65rem; letter-spacing: 1px;">PIXEL CORRELATION (H / V / D)</div>
                                                 <div class="d-flex justify-content-between px-2 text-white small font-mono">
-                                                    <span id="val-corr-h">-</span><span id="val-corr-v">-</span><span
-                                                        id="val-corr-d">-</span>
+                                                    <span id="val-corr-h">-</span><span id="val-corr-v">-</span><span id="val-corr-d">-</span>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div id="decryptMsg" class="hidden text-center py-5 text-muted small"><i>Analysis
-                                            is available for Encryption mode only.</i></div>
+                                            </div>
+                                        <div id="decryptMsg" class="hidden text-center py-5 text-muted small"><i>Decryption Successful. Visual analysis disabled.</i></div>
                                     </div>
                                 </div>
                             </div>
@@ -1464,105 +482,44 @@
     </div>
 </div>
 
-<footer class="py-4 text-center text-muted border-top border-dark"
-        style="background: rgba(10, 10, 12, 0.9); font-size: 0.85rem;">
+<footer class="py-4 text-center text-muted border-top border-dark" style="background: rgba(10, 10, 12, 0.9); font-size: 0.85rem;">
     <div class="container">© 2025 Universitas Negeri Semarang. Cryptography Research Project.</div>
 </footer>
 
-<div id="loader">
-    <div class="spinner mb-3"></div>
-    <div class="text-white small fw-bold tracking-wide">PROCESSING</div>
-</div>
+<div id="loader"><div class="spinner mb-3"></div><div class="text-white small fw-bold tracking-wide">PROCESSING</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // --- INTERACTIVE CONSTELLATION ---
-    const canvas = document.getElementById('constellation-canvas');
-    const ctx = canvas.getContext('2d');
-    let stars = [], w, h, mouse = {x: null, y: null};
-
-    function resize() {
-        w = canvas.width = window.innerWidth;
-        h = canvas.height = window.innerHeight;
-    }
-
-    window.addEventListener('resize', () => {
-        resize();
-        initStars();
-    });
-    window.addEventListener('mousemove', (e) => {
-        mouse.x = e.x;
-        mouse.y = e.y;
-    });
+    const canvas = document.getElementById('constellation-canvas'); const ctx = canvas.getContext('2d');
+    let stars = [], w, h, mouse = { x: null, y: null };
+    function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+    window.addEventListener('resize', () => { resize(); initStars(); });
+    window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
     resize();
-
     class Star {
-        constructor() {
-            this.x = Math.random() * w;
-            this.y = Math.random() * h;
-            this.vx = (Math.random() - 0.5) * 0.5;
-            this.vy = (Math.random() - 0.5) * 0.5;
-            this.size = Math.random() * 2;
-        }
-
-        update() {
-            this.x += this.vx;
-            this.y += this.vy;
-            if (this.x < 0 || this.x > w) this.vx *= -1;
-            if (this.y < 0 || this.y > h) this.vy *= -1;
-        }
-
-        draw() {
-            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
-        }
+        constructor() { this.x = Math.random()*w; this.y = Math.random()*h; this.vx = (Math.random()-0.5)*0.5; this.vy = (Math.random()-0.5)*0.5; this.size = Math.random()*2; }
+        update() { this.x += this.vx; this.y += this.vy; if(this.x<0||this.x>w) this.vx*=-1; if(this.y<0||this.y>h) this.vy*=-1; }
+        draw() { ctx.fillStyle = "rgba(255, 255, 255, 0.8)"; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill(); }
     }
-
-    function initStars() {
-        stars = [];
-        for (let i = 0; i < Math.floor(w * h / 10000); i++) stars.push(new Star());
-    }
-
+    function initStars() { stars = []; for(let i=0; i<Math.floor(w*h/10000); i++) stars.push(new Star()); }
     function animate() {
         ctx.clearRect(0, 0, w, h);
-        for (let i = 0; i < stars.length; i++) {
-            stars[i].update();
-            stars[i].draw();
-            for (let j = i + 1; j < stars.length; j++) {
-                let dx = stars[i].x - stars[j].x, dy = stars[i].y - stars[j].y, dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 100) {
-                    ctx.beginPath();
-                    ctx.strokeStyle = `rgba(102, 252, 241, ${1 - dist / 100})`;
-                    ctx.lineWidth = 0.5;
-                    ctx.moveTo(stars[i].x, stars[i].y);
-                    ctx.lineTo(stars[j].x, stars[j].y);
-                    ctx.stroke();
-                }
+        for(let i=0; i<stars.length; i++) {
+            stars[i].update(); stars[i].draw();
+            for(let j=i+1; j<stars.length; j++) {
+                let dx=stars[i].x-stars[j].x, dy=stars[i].y-stars[j].y, dist=Math.sqrt(dx*dx+dy*dy);
+                if(dist<100) { ctx.beginPath(); ctx.strokeStyle = `rgba(102, 252, 241, ${1-dist/100})`; ctx.lineWidth = 0.5; ctx.moveTo(stars[i].x, stars[i].y); ctx.lineTo(stars[j].x, stars[j].y); ctx.stroke(); }
             }
-            if (mouse.x) {
-                let dx = stars[i].x - mouse.x, dy = stars[i].y - mouse.y, dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 150) {
-                    ctx.beginPath();
-                    ctx.strokeStyle = `rgba(102, 252, 241, ${1 - dist / 150})`;
-                    ctx.lineWidth = 0.8;
-                    ctx.moveTo(stars[i].x, stars[i].y);
-                    ctx.lineTo(mouse.x, mouse.y);
-                    ctx.stroke();
-                }
+            if(mouse.x) {
+                let dx = stars[i].x - mouse.x, dy = stars[i].y - mouse.y, dist = Math.sqrt(dx*dx+dy*dy);
+                if(dist < 150) { ctx.beginPath(); ctx.strokeStyle = `rgba(102, 252, 241, ${1-dist/150})`; ctx.lineWidth = 0.8; ctx.moveTo(stars[i].x, stars[i].y); ctx.lineTo(mouse.x, mouse.y); ctx.stroke(); }
             }
         }
         requestAnimationFrame(animate);
     }
-
-    initStars();
-    animate();
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) entry.target.classList.add('active');
-        });
-    }, {threshold: 0.1});
+    initStars(); animate();
+    const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); }); }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
     // --- APP LOGIC ---
@@ -1591,53 +548,33 @@
             });
             renderGrid(new Array(256).fill(0));
             initCustomInputs();
-        } catch (e) {
-        }
+        } catch(e) {}
     };
 
     function initCustomInputs() {
         const matGrid = document.getElementById('input-matrix');
         const constGrid = document.getElementById('input-constant');
-        matGrid.innerHTML = '';
-        constGrid.innerHTML = '';
-        for (let i = 0; i < 64; i++) {
-            const btn = document.createElement('div');
-            btn.className = 'bit-btn';
-            btn.innerText = '0';
-            btn.onclick = () => toggleBit(btn, i, 'matrix');
-            matGrid.appendChild(btn);
+        matGrid.innerHTML = ''; constGrid.innerHTML = '';
+        for(let i=0; i<64; i++) {
+            const btn = document.createElement('div'); btn.className = 'bit-btn'; btn.innerText = '0';
+            btn.onclick = () => toggleBit(btn, i, 'matrix'); matGrid.appendChild(btn);
         }
-        for (let i = 0; i < 8; i++) {
-            const btn = document.createElement('div');
-            btn.className = 'bit-btn';
-            btn.innerText = '0';
-            btn.onclick = () => toggleBit(btn, i, 'constant');
-            constGrid.appendChild(btn);
+        for(let i=0; i<8; i++) {
+            const btn = document.createElement('div'); btn.className = 'bit-btn'; btn.innerText = '0';
+            btn.onclick = () => toggleBit(btn, i, 'constant'); constGrid.appendChild(btn);
         }
     }
-
     function toggleBit(el, idx, type) {
-        if (type === 'matrix') {
-            customMatrix[idx] = customMatrix[idx] ? 0 : 1;
-            el.innerText = customMatrix[idx];
-        } else {
-            customConstant[idx] = customConstant[idx] ? 0 : 1;
-            el.innerText = customConstant[idx];
-        }
+        if(type === 'matrix') { customMatrix[idx] = customMatrix[idx] ? 0 : 1; el.innerText = customMatrix[idx]; }
+        else { customConstant[idx] = customConstant[idx] ? 0 : 1; el.innerText = customConstant[idx]; }
         el.classList.toggle('active');
     }
-
     function resetMatrix() {
-        customMatrix.fill(0);
-        customConstant.fill(0);
-        document.querySelectorAll('.bit-btn').forEach(b => {
-            b.innerText = '0';
-            b.classList.remove('active');
-        });
+        customMatrix.fill(0); customConstant.fill(0);
+        document.querySelectorAll('.bit-btn').forEach(b => { b.innerText = '0'; b.classList.remove('active'); });
     }
-
     function switchMode(mode) {
-        if (mode === 'db') {
+        if(mode === 'db') {
             document.getElementById('mode-db-container').classList.remove('hidden');
             document.getElementById('mode-custom-container').classList.add('hidden');
             document.getElementById('btn-mode-db').classList.add('active');
@@ -1653,24 +590,20 @@
     async function uploadExcel() {
         const fileInput = document.getElementById('excelInput');
         const file = fileInput.files[0];
-        if (!file) return alert("Please select an Excel file (.xlsx) first.");
-        const fd = new FormData();
-        fd.append('file', file);
+        if(!file) return alert("Please select an Excel file (.xlsx) first.");
+        const fd = new FormData(); fd.append('file', file);
         document.getElementById('loader').style.display = 'flex';
         try {
-            const res = await fetch('/api/upload_excel', {method: 'POST', body: fd});
+            const res = await fetch('/api/upload_excel', { method: 'POST', body: fd });
             const data = await res.json();
             document.getElementById('loader').style.display = 'none';
-            if (data.status === 'success') {
+            if(data.status === 'success') {
                 document.getElementById('sboxInput').value = data.sbox.join(', ');
                 renderGrid(data.sbox);
                 alert("Excel Uploaded! Analyzing S-Box...");
                 analyze();
             } else alert("Error: " + data.error);
-        } catch (e) {
-            document.getElementById('loader').style.display = 'none';
-            alert("Error: " + e);
-        }
+        } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Error: " + e); }
     }
 
     async function generateCustomSBox() {
@@ -1682,34 +615,24 @@
             });
             const data = await res.json();
             document.getElementById('loader').style.display = 'none';
-            if (data.status === 'success') {
+            if(data.status === 'success') {
                 document.getElementById('sboxInput').value = data.sbox.join(', ');
                 renderGrid(data.sbox);
                 analyze();
             } else alert("Error: " + data.error);
-        } catch (e) {
-            document.getElementById('loader').style.display = 'none';
-            alert("Error: " + e);
-        }
+        } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Error: " + e); }
     }
 
     function toggleSidebar(show) {
-        const sb = document.getElementById('sidebarCol');
-        const ct = document.getElementById('contentCol');
-        if (show) {
-            sb.classList.remove('d-none');
-            ct.className = 'col-lg-8';
-        } else {
-            sb.classList.add('d-none');
-            ct.className = 'col-lg-12';
-        }
+        const sb = document.getElementById('sidebarCol'); const ct = document.getElementById('contentCol');
+        if(show) { sb.classList.remove('d-none'); ct.className = 'col-lg-8'; } else { sb.classList.add('d-none'); ct.className = 'col-lg-12'; }
     }
 
     async function loadFromJSON() {
         const idx = document.getElementById('jsonSelect').value;
         const res = await fetch(`/api/get_sbox/${idx}`);
         const data = await res.json();
-        if (data.status === 'success') {
+        if(data.status === 'success') {
             document.getElementById('sboxInput').value = data.sbox.join(', ');
             renderGrid(data.sbox);
             document.getElementById('results').classList.add('hidden');
@@ -1719,13 +642,10 @@
     }
 
     function renderGrid(arr) {
-        const grid = document.getElementById('visualGrid');
-        grid.innerHTML = '';
+        const grid = document.getElementById('visualGrid'); grid.innerHTML = '';
         arr.forEach((val, idx) => {
-            const div = document.createElement('div');
-            div.className = 'cell';
-            const hue = 180 + (val / 255 * 30);
-            div.style.backgroundColor = `hsl(${hue}, 60%, ${20 + (val / 255 * 40)}%)`;
+            const div = document.createElement('div'); div.className = 'cell';
+            const hue = 180 + (val / 255 * 30); div.style.backgroundColor = `hsl(${hue}, 60%, ${20 + (val/255*40)}%)`;
             div.innerText = val.toString(16).toUpperCase().padStart(2, '0');
             div.style.animationDelay = `${idx * 2}ms`;
             div.onmouseenter = () => updateInspector(idx, val);
@@ -1734,65 +654,41 @@
     }
 
     function updateInspector(idx, val) {
-        document.getElementById('insp-idx').innerText = idx;
-        document.getElementById('insp-dec').innerText = val;
-        document.getElementById('insp-hex-s').innerText = "0x" + val.toString(16).toUpperCase().padStart(2, '0');
-        document.getElementById('insp-bin').innerText = val.toString(2).padStart(8, '0');
+        document.getElementById('insp-idx').innerText = idx; document.getElementById('insp-dec').innerText = val;
+        document.getElementById('insp-hex-s').innerText = "0x" + val.toString(16).toUpperCase().padStart(2,'0');
+        document.getElementById('insp-bin').innerText = val.toString(2).padStart(8,'0');
     }
-
-    function clearInspector() {
-        ['insp-idx', 'insp-dec', 'insp-hex-s', 'insp-bin'].forEach(id => document.getElementById(id).innerText = '-');
-    }
-
+    function clearInspector() { ['insp-idx','insp-dec','insp-hex-s','insp-bin'].forEach(id => document.getElementById(id).innerText = '-'); }
     function getSbox() {
         try {
             const val = document.getElementById('sboxInput').value.trim();
             if (!val) return null;
             return val.split(/[\s,]+/).map(Number).filter(n => !isNaN(n));
-        } catch {
-            return null;
-        }
+        } catch { return null; }
     }
 
     async function analyze() {
         const sbox = getSbox();
-        if (!sbox || sbox.length !== 256) {
-            alert("S-Box must be 256 ints.");
-            return;
-        }
+        if(!sbox || sbox.length !== 256) { alert("S-Box must be 256 ints."); return; }
         document.getElementById('loader').style.display = 'flex';
         try {
-            const res = await fetch('/api/analyze', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({sbox: sbox})
-            });
+            const res = await fetch('/api/analyze', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({sbox: sbox}) });
             const d = await res.json();
             document.getElementById('loader').style.display = 'none';
-            if (d.status === 'success') {
+            if(d.status === 'success') {
                 currentMetrics = d.metrics;
                 document.getElementById('welcomeState').classList.add('hidden');
                 document.getElementById('results').classList.remove('hidden');
                 document.getElementById('exportBtn').classList.remove('hidden');
                 const m = d.metrics;
                 const txt = (id, v) => document.getElementById(id).innerText = v;
-                txt('resNL', m.NL);
-                txt('resSAC', m.SAC.toFixed(4));
-                txt('resDU', m.DU);
-                txt('resAD', m.AD);
-                txt('resBIC', m.BIC_NL);
-                txt('resBICSAC', m.BIC_SAC.toFixed(4));
-                txt('resLAP', m.LAP.toFixed(4));
-                txt('resDAP', m.DAP.toFixed(4));
-                txt('resTO', m.TO.toFixed(4));
-                txt('resCI', m.CI);
-                txt('resSV', m.SV_PAPER.toFixed(4));
-                txt('resFIXED', m.FIXED);
-                txt('resCYCMAX', m.CYC_MAX);
+                txt('resNL', m.NL); txt('resSAC', m.SAC.toFixed(4)); txt('resDU', m.DU);
+                txt('resAD', m.AD); txt('resBIC', m.BIC_NL); txt('resBICSAC', m.BIC_SAC.toFixed(4));
+                txt('resLAP', m.LAP.toFixed(4)); txt('resDAP', m.DAP.toFixed(4));
+                txt('resTO', m.TO.toFixed(4)); txt('resCI', m.CI); txt('resSV', m.SV_PAPER.toFixed(4));
+                txt('resFIXED', m.FIXED); txt('resCYCMAX', m.CYC_MAX);
             }
-        } catch {
-            document.getElementById('loader').style.display = 'none';
-        }
+        } catch { document.getElementById('loader').style.display = 'none'; }
     }
 
     function exportReport() {
@@ -1803,61 +699,33 @@
         report += `Nonlinearity     : ${m.NL}\nSAC              : ${m.SAC.toFixed(5)}\nBIC-NL           : ${m.BIC_NL}\nBIC-SAC          : ${m.BIC_SAC.toFixed(5)}\nDiff. Uniformity : ${m.DU}\nAlgebraic Degree : ${m.AD}\nTransparency Ord : ${m.TO.toFixed(5)}\nCorr. Immunity   : ${m.CI}\nLAP (Bias)       : ${m.LAP.toFixed(5)}\nDAP (Diff Prob)  : ${m.DAP.toFixed(5)}\nFixed Points     : ${m.FIXED}\nMax Cycle Length : ${m.CYC_MAX}\n-----------------------------\nSTRENGTH VALUE (SV) : ${m.SV_PAPER.toFixed(6)}\n`;
         const blob = new Blob([report], {type: 'text/plain'});
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Report_${sboxName.replace(/\s+/g, '_')}.txt`;
-        a.click();
-        window.URL.revokeObjectURL(url);
+        const a = document.createElement('a'); a.href = url; a.download = `Report_${sboxName.replace(/\s+/g, '_')}.txt`; a.click(); window.URL.revokeObjectURL(url);
     }
 
     async function runComparison() {
         const idxA = document.getElementById('compSelectA').value;
         const idxB = document.getElementById('compSelectB').value;
-        if (!idxA || !idxB) return alert("Select both!");
+        if(!idxA || !idxB) return alert("Select both!");
         document.getElementById('loader').style.display = 'flex';
         try {
             const resA = await (await fetch(`/api/get_sbox/${idxA}`)).json();
             const resB = await (await fetch(`/api/get_sbox/${idxB}`)).json();
-            const metA = await (await fetch('/api/analyze', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({sbox: resA.sbox})
-            })).json();
-            const metB = await (await fetch('/api/analyze', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({sbox: resB.sbox})
-            })).json();
+            const metA = await (await fetch('/api/analyze', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({sbox: resA.sbox}) })).json();
+            const metB = await (await fetch('/api/analyze', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({sbox: resB.sbox}) })).json();
             document.getElementById('loader').style.display = 'none';
 
-            const tbody = document.getElementById('comparisonTableBody');
-            tbody.innerHTML = '';
-            const metrics = [{id: 'NL', name: 'Nonlinearity', target: 112}, {
-                id: 'SAC',
-                name: 'SAC',
-                target: 0.5
-            }, {id: 'BIC_NL', name: 'BIC-NL', target: 112}, {id: 'BIC_SAC', name: 'BIC-SAC', target: 0.5}, {
-                id: 'DU',
-                name: 'Diff. Uniformity',
-                target: 4
-            }, {id: 'AD', name: 'Alg. Degree', target: 7}, {id: 'SV_PAPER', name: 'Strength Value', target: 0}];
+            const tbody = document.getElementById('comparisonTableBody'); tbody.innerHTML = '';
+            const metrics = [{id:'NL',name:'Nonlinearity',target:112},{id:'SAC',name:'SAC',target:0.5},{id:'BIC_NL',name:'BIC-NL',target:112},{id:'BIC_SAC',name:'BIC-SAC',target:0.5},{id:'DU',name:'Diff. Uniformity',target:4},{id:'AD',name:'Alg. Degree',target:7},{id:'SV_PAPER',name:'Strength Value',target:0}];
             metrics.forEach(m => {
                 const vA = metA.metrics[m.id], vB = metB.metrics[m.id];
                 let win = 'Tie';
-                if (m.id === 'DU' || m.id === 'SV_PAPER') {
-                    if (vA < vB) win = 'Ref Win'; else if (vB < vA) win = 'Cand Win';
-                } else if (m.id.includes('SAC')) {
-                    if (Math.abs(vA - 0.5) < Math.abs(vB - 0.5)) win = 'Ref Win'; else if (Math.abs(vB - 0.5) < Math.abs(vA - 0.5)) win = 'Cand Win';
-                } else {
-                    if (vA > vB) win = 'Ref Win'; else if (vB > vA) win = 'Cand Win';
-                }
-                tbody.innerHTML += `<tr><td class="small text-muted">${m.name}</td><td class="text-center text-white">${Number(vA).toFixed(4)}</td><td class="text-center text-white">${Number(vB).toFixed(4)}</td><td class="text-center small ${win.includes('Cand') ? 'text-win' : 'text-muted'}">${win}</td></tr>`;
+                if(m.id==='DU' || m.id==='SV_PAPER') { if(vA<vB) win='Ref Win'; else if(vB<vA) win='Cand Win'; }
+                else if(m.id.includes('SAC')) { if(Math.abs(vA-0.5)<Math.abs(vB-0.5)) win='Ref Win'; else if(Math.abs(vB-0.5)<Math.abs(vA-0.5)) win='Cand Win'; }
+                else { if(vA>vB) win='Ref Win'; else if(vB>vA) win='Cand Win'; }
+                tbody.innerHTML += `<tr><td class="small text-muted">${m.name}</td><td class="text-center text-white">${Number(vA).toFixed(4)}</td><td class="text-center text-white">${Number(vB).toFixed(4)}</td><td class="text-center small ${win.includes('Cand')?'text-win':'text-muted'}">${win}</td></tr>`;
             });
             renderRadarChart(metA.metrics, metB.metrics);
-        } catch (e) {
-            document.getElementById('loader').style.display = 'none';
-            alert("Error running comparison.");
-        }
+        } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Error running comparison."); }
     }
 
     function renderRadarChart(mA, mB) {
@@ -1918,22 +786,22 @@
                 maintainAspectRatio: false,
                 scales: {
                     r: {
-                        angleLines: {color: '#333'},
-                        grid: {color: '#222'}, // Grid lebih gelap
+                        angleLines: { color: '#333' },
+                        grid: { color: '#222' }, // Grid lebih gelap
                         pointLabels: {
                             color: '#94a3b8',
                             font: {size: 10, family: 'Inter'}
                         },
-                        ticks: {display: false}, // Hilangkan angka axis biar bersih
+                        ticks: { display: false }, // Hilangkan angka axis biar bersih
                         suggestedMin: 50, // Zoom in ke range 50-100 biar bedanya kelihatan
                         suggestedMax: 100
                     }
                 },
                 plugins: {
-                    legend: {labels: {color: '#e0e6ed'}},
+                    legend: { labels: { color: '#e0e6ed' } },
                     tooltip: {
                         callbacks: {
-                            label: function (context) {
+                            label: function(context) {
                                 return context.dataset.label + ': ' + context.raw.toFixed(1) + ' Pts';
                             }
                         }
@@ -1943,127 +811,72 @@
         });
     }
 
-    function moveResult() {
-        document.getElementById('txtInput').value = document.getElementById('txtResult').value;
-        document.getElementById('txtResult').value = "";
-    }
-
+    function moveResult() { document.getElementById('txtInput').value = document.getElementById('txtResult').value; document.getElementById('txtResult').value = ""; }
     async function doText(mode) {
-        const sbox = getSbox();
-        if (!sbox) return;
-        const txt = document.getElementById('txtInput').value;
-        if (!txt) return;
-        const res = await fetch('/api/process_text', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({text: txt, sbox: sbox, mode: mode})
-        });
-        const d = await res.json();
-        document.getElementById('txtResult').value = d.result;
+        const sbox = getSbox(); if(!sbox) return;
+        const txt = document.getElementById('txtInput').value; if(!txt) return;
+        const res = await fetch('/api/process_text', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ text: txt, sbox: sbox, mode: mode }) });
+        const d = await res.json(); document.getElementById('txtResult').value = d.result;
     }
 
     async function doImage(mode) {
         const sbox = getSbox();
         const file = document.getElementById('imgInput').files[0];
-        if (!sbox || !file) return alert("Check inputs!");
-        const fd = new FormData();
-        fd.append('image', file);
-        fd.append('sbox', sbox.join(','));
-        fd.append('mode', mode);
+        if(!sbox || !file) return alert("Check inputs!");
+        const fd = new FormData(); fd.append('image', file); fd.append('sbox', sbox.join(',')); fd.append('mode', mode);
         document.getElementById('loader').style.display = 'flex';
         try {
-            const res = await fetch('/api/process_image', {method: 'POST', body: fd});
+            const res = await fetch('/api/process_image', { method: 'POST', body: fd });
             const d = await res.json();
             document.getElementById('loader').style.display = 'none';
-            if (d.status === 'success') {
+            if(d.status === 'success') {
                 document.getElementById('imgPreviewArea').classList.remove('hidden');
                 document.getElementById('imgResult').src = "data:image/png;base64," + d.image_b64;
                 document.getElementById('dlBtn').href = document.getElementById('imgResult').src;
                 const panel = document.getElementById('statsPanel');
-                if (mode === 'encrypt' && d.stats) {
-                    panel.classList.remove('hidden');
-                    document.getElementById('decryptMsg').classList.add('hidden');
+                if(mode === 'encrypt' && d.stats) {
+                    panel.classList.remove('hidden'); document.getElementById('decryptMsg').classList.add('hidden');
                     document.getElementById('val-entropy').innerText = d.stats.entropy.toFixed(4);
-                    document.getElementById('val-npcr').innerText = d.stats.npcr.toFixed(2) + "%";
-                    document.getElementById('val-uaci').innerText = d.stats.uaci.toFixed(2) + "%";
+                    document.getElementById('val-npcr').innerText = d.stats.npcr.toFixed(2)+"%";
+                    document.getElementById('val-uaci').innerText = d.stats.uaci.toFixed(2)+"%";
                     document.getElementById('val-corr-h').innerText = d.stats.corr.H.toFixed(4);
                     document.getElementById('val-corr-v').innerText = d.stats.corr.V.toFixed(4);
                     document.getElementById('val-corr-d').innerText = d.stats.corr.D.toFixed(4);
                     renderHistogram(d.histograms.original, d.histograms.processed);
                 } else {
-                    panel.classList.add('hidden');
-                    document.getElementById('decryptMsg').classList.remove('hidden');
+                    panel.classList.add('hidden'); document.getElementById('decryptMsg').classList.remove('hidden');
                 }
             } else alert("Error: " + d.error);
-        } catch (e) {
-            document.getElementById('loader').style.display = 'none';
-            alert(e);
-        }
+        } catch(e) { document.getElementById('loader').style.display = 'none'; alert(e); }
     }
 
     function renderHistogram(orig, cipher) {
         const ctx = document.getElementById('histChart').getContext('2d');
-        if (chartInstance) chartInstance.destroy();
+        if(chartInstance) chartInstance.destroy();
         const labels = Array.from({length: 256}, (_, i) => i);
         chartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [
-                    {
-                        label: 'Encrypted',
-                        data: cipher,
-                        backgroundColor: 'rgba(102, 252, 241, 0.9)',
-                        barPercentage: 1.0,
-                        categoryPercentage: 1.0,
-                        order: 1
-                    },
-                    {
-                        label: 'Original',
-                        data: orig,
-                        backgroundColor: 'rgba(239, 68, 68, 0.5)',
-                        barPercentage: 1.0,
-                        categoryPercentage: 1.0,
-                        order: 2
-                    }
+                    { label: 'Encrypted', data: cipher, backgroundColor: 'rgba(102, 252, 241, 0.9)', barPercentage: 1.0, categoryPercentage: 1.0, order: 1 },
+                    { label: 'Original', data: orig, backgroundColor: 'rgba(239, 68, 68, 0.5)', barPercentage: 1.0, categoryPercentage: 1.0, order: 2 }
                 ]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                interaction: {mode: 'index', intersect: false},
+                interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: {labels: {color: '#c5c6c7', font: {size: 10}}},
-                    tooltip: {
-                        backgroundColor: 'rgba(0,0,0,0.9)',
-                        titleColor: '#fff',
-                        borderColor: '#333',
-                        borderWidth: 1,
-                        callbacks: {
-                            label: function (context) {
-                                return context.dataset.label + ': ' + context.parsed.y + ' pixels';
-                            }
-                        }
-                    },
-                    zoom: {
-                        pan: {enabled: true, mode: 'xy'},
-                        zoom: {wheel: {enabled: true}, pinch: {enabled: true}, mode: 'xy'}
-                    }
+                    legend: { labels: { color: '#c5c6c7', font: {size: 10} } },
+                    tooltip: { backgroundColor: 'rgba(0,0,0,0.9)', titleColor: '#fff', borderColor: '#333', borderWidth: 1, callbacks: { label: function(context) { return context.dataset.label + ': ' + context.parsed.y + ' pixels'; } } },
+                    zoom: { pan: { enabled: true, mode: 'xy' }, zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'xy' } }
                 },
-                scales: {
-                    x: {display: false},
-                    y: {
-                        ticks: {color: '#8892b0', font: {size: 9}},
-                        grid: {color: '#333', drawBorder: false},
-                        beginAtZero: true
-                    }
-                }
+                scales: { x: { display: false }, y: { ticks: { color: '#8892b0', font: {size: 9} }, grid: { color: '#333', drawBorder: false }, beginAtZero: true } }
             }
         });
     }
 
-    function resetChartZoom() {
-        if (chartInstance) chartInstance.resetZoom();
-    }
+    function resetChartZoom() { if(chartInstance) chartInstance.resetZoom(); }
 </script>
 
 </body>
