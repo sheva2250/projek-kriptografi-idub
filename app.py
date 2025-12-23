@@ -8,6 +8,7 @@ import math
 import random
 from collections import Counter
 from PIL import Image
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -34,10 +35,9 @@ load_database()
 
 
 # ==============================================================================
-# 2. CORE LOGIC & METRICS
+# 2. CORE LOGIC
 # ==============================================================================
 
-# --- GF(2^8) & AFFINE ---
 def gf_inverse(val):
     if val == 0: return 0
     res = 1;
@@ -76,7 +76,16 @@ def apply_affine(byte_val, matrix_flat, constant_flat):
     return res
 
 
-# --- S-BOX METRICS ---
+# --- VALIDATOR S-BOX (PENTING!) ---
+def validate_sbox(sbox):
+    """Mengecek apakah S-Box valid (Bijektif/Unik)"""
+    if len(sbox) != 256: return False, "Size must be 256"
+    if len(
+        set(sbox)) != 256: return False, "S-Box INVALID: Contains duplicate values (Not Bijective). Decryption impossible."
+    return True, "OK"
+
+
+# --- METRICS ---
 def fast_walsh_transform(func):
     n = len(func);
     wf = list(func)
@@ -247,11 +256,10 @@ def calculate_all_metrics(sbox):
 
 
 # ==============================================================================
-# 3. ADVANCED IMAGE ANALYTICS (ENTROPY, CORRELATION, NPCR, UACI)
+# 3. ADVANCED IMAGE ANALYTICS
 # ==============================================================================
 
 def calculate_entropy(data_bytes):
-    """Shannon Entropy"""
     if not data_bytes: return 0
     counts = Counter(data_bytes)
     total_len = len(data_bytes)
@@ -263,51 +271,33 @@ def calculate_entropy(data_bytes):
 
 
 def calculate_correlation(data_bytes, w, h):
-    """Calculates Adjacent Pixel Correlation (Horizontal, Vertical, Diagonal)"""
-    # Convert to numpy array for speed
     arr = np.frombuffer(data_bytes, dtype=np.uint8)
-    # Resize if array size matches w*h (handle potential padding/headers issue simply)
-    if len(arr) != w * h:
-        # If size mismatch (e.g. RGB flattened), take first channel or grayscale equivalent
-        # For simplicity in this demo, we limit to first N pixels that fit
+    if len(arr) == w * h * 3:
+        arr = arr.reshape((-1, 3)).mean(axis=1).astype(np.uint8)
+    elif len(arr) != w * h:
         size = w * h
         if len(arr) > size:
             arr = arr[:size]
         elif len(arr) < size:
             return {"H": 0, "V": 0, "D": 0}
-
     img_matrix = arr.reshape((h, w))
 
-    # Helper for correlation coef
     def get_corr(x, y):
         if len(x) == 0: return 0
+        if np.std(x) == 0 or np.std(y) == 0: return 0
         return np.corrcoef(x, y)[0, 1]
 
-    # Select N random pairs (limit to 3000 pairs for performance)
     N = 3000
-
-    # Horizontal
-    x_h, y_h = [], []
+    x_h, y_h, x_v, y_v, x_d, y_d = [], [], [], [], [], []
     for _ in range(N):
-        r = random.randint(0, h - 1)
-        c = random.randint(0, w - 2)
-        x_h.append(img_matrix[r, c])
+        r, c = random.randint(0, h - 1), random.randint(0, w - 2)
+        x_h.append(img_matrix[r, c]);
         y_h.append(img_matrix[r, c + 1])
-
-    # Vertical
-    x_v, y_v = [], []
-    for _ in range(N):
-        r = random.randint(0, h - 2)
-        c = random.randint(0, w - 1)
-        x_v.append(img_matrix[r, c])
+        r, c = random.randint(0, h - 2), random.randint(0, w - 1)
+        x_v.append(img_matrix[r, c]);
         y_v.append(img_matrix[r + 1, c])
-
-    # Diagonal
-    x_d, y_d = [], []
-    for _ in range(N):
-        r = random.randint(0, h - 2)
-        c = random.randint(0, w - 2)
-        x_d.append(img_matrix[r, c])
+        r, c = random.randint(0, h - 2), random.randint(0, w - 2)
+        x_d.append(img_matrix[r, c]);
         y_d.append(img_matrix[r + 1, c + 1])
 
     return {
@@ -318,28 +308,26 @@ def calculate_correlation(data_bytes, w, h):
 
 
 def calculate_npcr_uaci(orig_bytes, cipher_bytes):
-    """Calculates NPCR and UACI between two images"""
     arr1 = np.frombuffer(orig_bytes, dtype=np.uint8)
     arr2 = np.frombuffer(cipher_bytes, dtype=np.uint8)
-
-    # Ensure same length
     min_len = min(len(arr1), len(arr2))
-    arr1 = arr1[:min_len]
+    arr1 = arr1[:min_len];
     arr2 = arr2[:min_len]
-
-    # NPCR: Rate of pixel change
     diff_count = np.sum(arr1 != arr2)
     npcr = (diff_count / min_len) * 100
-
-    # UACI: Unified Average Changing Intensity
     abs_diff = np.sum(np.abs(arr1.astype(int) - arr2.astype(int)))
     uaci = (abs_diff / (255 * min_len)) * 100
-
     return round(npcr, 4), round(uaci, 4)
 
 
+def calculate_histogram(data_bytes):
+    arr = np.frombuffer(data_bytes, dtype=np.uint8)
+    hist, _ = np.histogram(arr, bins=256, range=(0, 256))
+    return hist.tolist()
+
+
 # ==============================================================================
-# 4. ROUTING
+# 4. ROUTING & CONTROLLERS
 # ==============================================================================
 
 @app.route('/')
@@ -369,7 +357,47 @@ def generate_custom():
         if not matrix or len(matrix) != 64 or not constant or len(constant) != 8: return jsonify(
             {"error": "Invalid input"}), 400
         gen_sbox = [apply_affine(gf_inverse(i), matrix, constant) for i in range(256)]
+
+        # VALIDASI DI SINI
+        is_valid, msg = validate_sbox(gen_sbox)
+        if not is_valid: return jsonify({"error": msg}), 400
+
         return jsonify({"status": "success", "sbox": gen_sbox})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/upload_excel', methods=['POST'])
+def upload_excel():
+    try:
+        file = request.files['file']
+        if not file: return jsonify({"error": "No file"}), 400
+        df = pd.read_excel(file, header=None)
+        values = df.values.flatten().tolist()
+        clean_sbox = []
+        for x in values:
+            try:
+                if isinstance(x, str):
+                    if x.lower().startswith('0x'):
+                        val = int(x, 16)
+                    else:
+                        try:
+                            val = int(x)
+                        except:
+                            val = int(x, 16)
+                else:
+                    val = int(x)
+                if 0 <= val <= 255: clean_sbox.append(val)
+            except:
+                pass
+
+        if len(clean_sbox) != 256: return jsonify({"error": "Invalid Length"}), 400
+
+        # VALIDASI DI SINI JUGA
+        is_valid, msg = validate_sbox(clean_sbox)
+        if not is_valid: return jsonify({"error": msg}), 400
+
+        return jsonify({"status": "success", "sbox": clean_sbox})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -378,7 +406,8 @@ def generate_custom():
 def analyze():
     try:
         sbox = request.json.get('sbox')
-        if not sbox or len(sbox) != 256: return jsonify({"error": "Invalid Data"}), 400
+        is_valid, msg = validate_sbox(sbox)
+        if not is_valid: return jsonify({"error": msg}), 400
         return jsonify({"status": "success", "metrics": calculate_all_metrics(sbox)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -393,6 +422,7 @@ def encrypt_cbc_bytes(data, sbox):
 
 def decrypt_cbc_bytes(data, sbox):
     inv = [0] * 256
+    # Ini langkah krusial. Jika sbox ada duplikat, inv akan rusak.
     for i, v in enumerate(sbox): inv[v] = i
     out = bytearray();
     prev = 0
@@ -406,13 +436,17 @@ def process_text():
         d = request.json;
         mode = d['mode'];
         sbox = d['sbox']
+        # Validasi
+        is_valid, msg = validate_sbox(sbox)
+        if not is_valid: return jsonify({"error": msg}), 400
+
         if mode == 'encrypt':
             res = encrypt_cbc_bytes(d['text'].encode(), sbox).hex().upper()
         else:
             try:
                 b = bytes.fromhex(d['text'].replace(' ', '')); res = decrypt_cbc_bytes(b, sbox).decode(errors='ignore')
             except:
-                res = "[Error: Invalid Hex]"
+                res = "[Error: Invalid Hex or Key]"
         return jsonify({"status": "success", "result": res})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -425,33 +459,45 @@ def process_image():
         sbox_str = request.form.get('sbox')
         if not sbox_str: return jsonify({"error": "S-Box missing"}), 400
         sbox = [int(x) for x in sbox_str.split(',')]
+
+        # VALIDASI WAJIB SEBELUM ENKRIPSI GAMBAR
+        is_valid, msg = validate_sbox(sbox)
+        if not is_valid: return jsonify({"error": msg}), 400
+
         mode = request.form.get('mode')
 
-        img = Image.open(f).convert('L')  # Convert to Grayscale for simpler analysis (common in papers)
-        # OR keep RGB but flatten. Let's use Grayscale ('L') to strictly follow standard crypto metrics on pixel values.
-        # If you want RGB, change 'L' to 'RGB'.
-
+        # Buka gambar sebagai RGB
+        img = Image.open(f).convert('RGB')
         orig_bytes = img.tobytes()
         w, h = img.size
 
+        # Convert ke gray untuk histogram original saja
+        orig_gray = img.convert('L').tobytes()
+        hist_orig = calculate_histogram(orig_gray)
+
+        stats = None;
+        hist_cipher = None
+
         if mode == 'encrypt':
             proc_bytes = encrypt_cbc_bytes(orig_bytes, sbox)
-            # Calculate Metrics only on Encryption
+
+            # Hitung metrik
             entropy = calculate_entropy(proc_bytes)
+            # Utk histogram tampilan
+            temp_img = Image.frombytes('RGB', (w, h), bytes(proc_bytes))
+            proc_gray = temp_img.convert('L').tobytes()
+            hist_cipher = calculate_histogram(proc_gray)
+
             corr = calculate_correlation(proc_bytes, w, h)
             npcr, uaci = calculate_npcr_uaci(orig_bytes, proc_bytes)
-
-            stats = {
-                "entropy": entropy,
-                "corr": corr,
-                "npcr": npcr,
-                "uaci": uaci
-            }
+            stats = {"entropy": entropy, "corr": corr, "npcr": npcr, "uaci": uaci}
         else:
             proc_bytes = decrypt_cbc_bytes(orig_bytes, sbox)
-            stats = None
+            temp_img = Image.frombytes('RGB', (w, h), bytes(proc_bytes))
+            proc_gray = temp_img.convert('L').tobytes()
+            hist_cipher = calculate_histogram(proc_gray)
 
-        res_img = Image.frombytes('L', (w, h), bytes(proc_bytes))
+        res_img = Image.frombytes('RGB', (w, h), bytes(proc_bytes))
         buf = io.BytesIO()
         res_img.save(buf, 'PNG')
         buf.seek(0)
@@ -459,7 +505,8 @@ def process_image():
         return jsonify({
             "status": "success",
             "image_b64": base64.b64encode(buf.getvalue()).decode(),
-            "stats": stats
+            "stats": stats,
+            "histograms": {"original": hist_orig, "processed": hist_cipher}
         })
     except Exception as e:
         print(e)
