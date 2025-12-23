@@ -10,23 +10,24 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
+
     <style>
         :root {
             /* THEME: Deep Space Grey */
-            --bg-body: #0b0c10;
-            --bg-card: #1f2833;
-            --bg-input: #121212;
-            --border-color: #333333;
-
+            --bg-body: #050507;
+            --bg-card: #12141a;
+            --bg-input: #0a0a0c;
+            --border-color: #2a2d35;
             /* ACCENT COLORS */
-            --primary: #66fcf1; /* Cyan Neon */
+            --primary: #66fcf1;
             --primary-hover: #45a29e;
             --success: #10b981;
             --danger: #ef4444;
-
-            /* TEXT */
-            --text-main: #c5c6c7;
-            --text-muted: #8892b0;
+            --text-main: #e0e6ed;
+            --text-muted: #94a3b8;
         }
 
         html {
@@ -38,13 +39,11 @@
             background-color: var(--bg-body);
             color: var(--text-main);
             min-height: 100vh;
-            margin: 0;
-            padding: 0;
             overflow-x: hidden;
             position: relative;
         }
 
-        /* --- CONSTELLATION CANVAS --- */
+        /* BACKGROUND & SCROLLBAR */
         #constellation-canvas {
             position: fixed;
             top: 0;
@@ -53,10 +52,27 @@
             height: 100%;
             z-index: -1;
             pointer-events: none;
-            background: radial-gradient(circle at bottom, #1b2735 0%, #090a0f 100%);
+            background: radial-gradient(circle at bottom, #1b2735 0%, #050507 100%);
         }
 
-        /* --- GLOBAL ANIMATIONS --- */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-body);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* ANIMATIONS */
         .reveal {
             opacity: 0;
             transform: translateY(30px);
@@ -68,7 +84,66 @@
             transform: translateY(0);
         }
 
-        /* --- COMPONENTS --- */
+        /* GLITCH EFFECT FOR TITLE */
+        .glitch-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .glitch {
+            position: relative;
+            color: white;
+            mix-blend-mode: lighten;
+        }
+
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-body);
+        }
+
+        .glitch::before {
+            left: 2px;
+            text-shadow: -1px 0 #ff00c1;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+
+        .glitch::after {
+            left: -2px;
+            text-shadow: -1px 0 #00fff9;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% {
+                clip: rect(30px, 9999px, 10px, 0);
+            }
+            5% {
+                clip: rect(70px, 9999px, 90px, 0);
+            }
+            10%, 100% {
+                clip: rect(0, 0, 0, 0);
+            }
+        }
+
+        @keyframes glitch-anim2 {
+            0% {
+                clip: rect(10px, 9999px, 80px, 0);
+            }
+            5% {
+                clip: rect(5px, 9999px, 40px, 0);
+            }
+            10%, 100% {
+                clip: rect(0, 0, 0, 0);
+            }
+        }
+
+        /* COMPONENTS */
         nav.navbar-custom {
             position: absolute;
             top: 0;
@@ -80,21 +155,28 @@
         }
 
         .tech-card {
-            background-color: rgba(31, 40, 51, 0.8);
+            background-color: rgba(18, 20, 26, 0.7);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
             overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .tech-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 25px rgba(102, 252, 241, 0.15);
+            transform: translateY(-2px);
         }
 
         .card-header-tech {
-            background-color: rgba(255, 255, 255, 0.02);
+            background: rgba(255, 255, 255, 0.03);
             border-bottom: 1px solid var(--border-color);
             padding: 1rem 1.5rem;
             font-size: 0.85rem;
-            font-weight: 600;
-            letter-spacing: 0.5px;
+            font-weight: 700;
+            letter-spacing: 1px;
             text-transform: uppercase;
             color: var(--text-muted);
             display: flex;
@@ -104,6 +186,7 @@
 
         .card-header-tech i {
             color: var(--primary);
+            filter: drop-shadow(0 0 5px var(--primary));
         }
 
         .form-control, .form-select {
@@ -113,33 +196,47 @@
             font-family: 'Inter', sans-serif;
             font-size: 0.9rem;
             border-radius: 8px;
-            padding: 0.6rem 1rem;
+            padding: 0.7rem 1rem;
+            transition: 0.3s;
         }
 
         .form-control:focus, .form-select:focus {
             border-color: var(--primary) !important;
-            box-shadow: 0 0 0 3px rgba(102, 252, 241, 0.15) !important;
+            box-shadow: 0 0 15px rgba(102, 252, 241, 0.2) !important;
         }
 
         .btn-primary-tech {
-            background-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, #45a29e 100%);
             border: none;
             color: #0b0c10;
-            font-weight: 700;
+            font-weight: 800;
             padding: 12px 20px;
             border-radius: 8px;
-            transition: all 0.2s;
+            transition: all 0.3s;
             width: 100%;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary-tech::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-primary-tech:hover::after {
+            left: 100%;
         }
 
         .btn-primary-tech:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 0 15px rgba(102, 252, 241, 0.4);
-        }
-
-        .btn-primary-tech:active {
-            transform: translateY(0);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 252, 241, 0.4);
         }
 
         .btn-outline-tech {
@@ -159,20 +256,55 @@
         }
 
         .btn-outline-tech.active {
-            background: var(--primary);
-            color: #0b0c10;
+            background: rgba(102, 252, 241, 0.1);
+            color: var(--primary);
             border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(102, 252, 241, 0.2);
         }
 
         /* S-BOX VISUALIZER */
+        .grid-wrapper {
+            position: relative;
+            padding: 2px;
+            border-radius: 9px;
+            background: linear-gradient(45deg, #333, #111);
+            overflow: hidden;
+        }
+
+        .grid-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(0deg, transparent, var(--primary), transparent);
+            animation: rotate-border 4s linear infinite;
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        .grid-wrapper:hover::before {
+            opacity: 0.3;
+        }
+
+        @keyframes rotate-border {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
         .grid-16 {
             display: grid;
             grid-template-columns: repeat(16, 1fr);
             gap: 1px;
-            padding: 2px;
             background: #000;
             border-radius: 8px;
-            border: 1px solid var(--border-color);
+            position: relative;
+            z-index: 1;
         }
 
         .cell {
@@ -187,57 +319,31 @@
             color: rgba(255, 255, 255, 0.8);
             font-weight: 700;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            opacity: 0;
+            animation: fade-in-cell 0.5s forwards;
+        }
+
+        @keyframes fade-in-cell {
+            from {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         .cell:hover {
-            transform: scale(1.5);
-            z-index: 10;
+            transform: scale(1.8);
+            z-index: 100;
             border: 1px solid var(--primary);
-            box-shadow: 0 0 15px var(--primary);
-            color: white;
+            box-shadow: 0 0 20px var(--primary);
+            background-color: var(--bg-body) !important;
+            color: var(--primary);
         }
 
-        /* --- CUSTOM MATRIX INPUT STYLES (NEW) --- */
-        .affine-grid-input {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 4px;
-            margin-bottom: 1rem;
-        }
-
-        .constant-grid-input {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 4px;
-            margin-bottom: 1.5rem;
-        }
-
-        .bit-btn {
-            aspect-ratio: 1;
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            color: #555;
-        }
-
-        .bit-btn:hover {
-            border-color: var(--primary);
-        }
-
-        .bit-btn.active {
-            background: var(--primary);
-            color: #0b0c10;
-            font-weight: bold;
-            box-shadow: 0 0 8px rgba(102, 252, 241, 0.5);
-            border-color: var(--primary);
-        }
-
+        /* METRICS & LAYOUT */
         .metric-box {
             background-color: var(--bg-input);
             border: 1px solid var(--border-color);
@@ -247,29 +353,37 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            transition: 0.3s;
+        }
+
+        .metric-box:hover {
+            border-color: rgba(102, 252, 241, 0.3);
+            background: rgba(102, 252, 241, 0.02);
         }
 
         .m-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             margin-bottom: 6px;
+            font-weight: 600;
         }
 
         .m-val {
-            font-size: 1.6rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: white;
             font-family: 'JetBrains Mono';
             line-height: 1;
             margin-bottom: 6px;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
 
         .m-target {
             font-size: 0.7rem;
             display: inline-block;
-            padding: 2px 6px;
+            padding: 2px 8px;
             border-radius: 4px;
             background: rgba(255, 255, 255, 0.05);
             color: var(--text-muted);
@@ -277,16 +391,18 @@
 
         .nav-pills .nav-link {
             color: var(--text-muted);
-            font-weight: 500;
+            font-weight: 600;
             border-radius: 8px;
             padding: 0.7rem 1.2rem;
             margin-right: 5px;
+            transition: 0.3s;
         }
 
         .nav-pills .nav-link.active {
             background-color: rgba(102, 252, 241, 0.1);
             color: var(--primary);
             border: 1px solid var(--primary);
+            box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
         }
 
         .table-tech {
@@ -299,13 +415,14 @@
             text-transform: uppercase;
             font-size: 0.75rem;
             color: var(--text-muted);
-            padding: 12px;
+            padding: 15px;
             font-weight: 600;
+            letter-spacing: 1px;
         }
 
         .table-tech td {
             vertical-align: middle;
-            padding: 12px;
+            padding: 15px;
             font-family: 'JetBrains Mono';
             font-size: 0.9rem;
         }
@@ -313,11 +430,12 @@
         .text-win {
             color: var(--success);
             font-weight: bold;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
         }
 
         .text-lose {
             color: var(--text-muted);
-            opacity: 0.6;
+            opacity: 0.5;
         }
 
         .hidden {
@@ -328,50 +446,60 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
-        .matrix-grid {
+        .affine-grid-input, .constant-grid-input {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
-            gap: 1px;
-            width: 100px;
-            margin: 0 auto;
-            border: 1px solid #333;
+            gap: 4px;
+            margin-bottom: 1rem;
         }
 
-        .bit {
-            width: 100%;
+        .bit-btn {
             aspect-ratio: 1;
-            font-size: 8px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #555;
-            background: #000;
+            font-size: 0.75rem;
+            color: #444;
+            transition: 0.2s;
         }
 
-        .bit.active {
+        .bit-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .bit-btn.active {
             background: var(--primary);
-            color: black;
+            color: #0b0c10;
             font-weight: bold;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
         }
 
         #loader {
             position: fixed;
             inset: 0;
-            background: rgba(11, 12, 16, 0.9);
+            background: rgba(5, 5, 7, 0.95);
             z-index: 9999;
             display: none;
             justify-content: center;
             align-items: center;
             flex-direction: column;
+            backdrop-filter: blur(5px);
         }
 
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--border-color);
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(102, 252, 241, 0.1);
             border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 0.8s infinite linear;
+            box-shadow: 0 0 20px rgba(102, 252, 241, 0.2);
         }
 
         @keyframes spin {
@@ -380,7 +508,7 @@
             }
         }
 
-        /* --- HERO SECTION --- */
+        /* HERO & ORBIT */
         .hero-section {
             min-height: 100vh;
             width: 100%;
@@ -395,20 +523,23 @@
             padding-top: 60px;
         }
 
-        .hero-content {
-            position: relative;
-            z-index: 1;
-            width: 100%;
+        .hero-bg-pattern {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.05;
+            z-index: 0;
+            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
         }
 
-        /* --- ORBITAL LOGO --- */
         .logo-orbit-wrapper {
             position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 420px;
-            height: 420px;
+            width: 450px;
+            height: 450px;
             margin: 0 auto;
         }
 
@@ -435,26 +566,25 @@
         }
 
         .orbit-1 {
-            width: 320px;
-            height: 320px;
-            border: 1px solid rgba(102, 252, 241, 0.3);
-            border-top-color: transparent;
-            border-left-color: transparent;
-            animation: spin-cw 12s linear infinite;
+            width: 340px;
+            height: 340px;
+            border: 1px solid rgba(102, 252, 241, 0.15);
+            border-top-color: var(--primary);
+            animation: spin-cw 8s linear infinite;
         }
 
         .orbit-2 {
-            width: 360px;
-            height: 360px;
-            border: 1px dashed rgba(102, 252, 241, 0.2);
-            animation: spin-ccw 25s linear infinite;
+            width: 380px;
+            height: 380px;
+            border: 1px dashed rgba(102, 252, 241, 0.1);
+            animation: spin-ccw 20s linear infinite;
         }
 
         .orbit-3 {
-            width: 400px;
-            height: 400px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            animation: spin-cw 20s linear infinite;
+            width: 420px;
+            height: 420px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            animation: spin-cw 15s linear infinite;
         }
 
         .orbit-3::after {
@@ -462,11 +592,11 @@
             position: absolute;
             top: 50px;
             left: 50px;
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             background: var(--primary);
             border-radius: 50%;
-            box-shadow: 0 0 10px var(--primary);
+            box-shadow: 0 0 15px var(--primary);
         }
 
         @keyframes spin-cw {
@@ -489,9 +619,9 @@
 
         @media (max-width: 991px) {
             .logo-orbit-wrapper {
-                transform: scale(0.7);
-                margin-top: -40px;
-                margin-bottom: -40px;
+                transform: scale(0.65);
+                margin-top: -50px;
+                margin-bottom: -50px;
             }
         }
 
@@ -515,10 +645,7 @@
             border-color: var(--primary);
             color: white;
             background: rgba(102, 252, 241, 0.1);
-        }
-
-        .feature-pill i {
-            color: var(--primary);
+            box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
         }
 
         .scroll-down-btn {
@@ -536,10 +663,12 @@
             flex-direction: column;
             align-items: center;
             gap: 5px;
+            transition: 0.3s;
         }
 
         .scroll-down-btn:hover {
             color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
         }
 
         @keyframes bounce {
@@ -554,63 +683,6 @@
             }
         }
 
-        /* --- ABSTRACT SECTION --- */
-        .abstract-section {
-            padding: 8rem 0;
-            position: relative;
-            background: transparent;
-        }
-
-        .abstract-card {
-            background: rgba(31, 40, 51, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 3rem;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .abstract-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, var(--primary), transparent);
-        }
-
-        .section-badge {
-            display: inline-block;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 1rem;
-            border: 1px solid rgba(102, 252, 241, 0.3);
-            padding: 6px 12px;
-            border-radius: 4px;
-        }
-
-        .abstract-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
-        }
-
-        .abstract-text {
-            font-size: 1.05rem;
-            color: #c5c6c7;
-            line-height: 1.8;
-            margin-bottom: 0;
-        }
-
-        /* --- PIPELINE FLOW --- */
         .pipeline-section {
             padding: 6rem 0;
             border-bottom: 1px solid var(--border-color);
@@ -633,9 +705,10 @@
             left: 50%;
             width: 2px;
             height: 100%;
-            background: rgba(255, 255, 255, 0.1);
+            background: linear-gradient(180deg, transparent, var(--primary), transparent);
             transform: translateX(-50%);
             z-index: 0;
+            opacity: 0.3;
         }
 
         .pipeline-step {
@@ -654,36 +727,10 @@
             text-align: right;
         }
 
-        .pipeline-step:nth-child(odd)::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            right: 0;
-            width: 40px;
-            height: 2px;
-            background: var(--primary);
-            transform: translateY(-50%);
-            z-index: -1;
-            box-shadow: 0 0 10px var(--primary);
-        }
-
         .pipeline-step:nth-child(even) {
             align-self: flex-end;
             flex-direction: row;
             text-align: left;
-        }
-
-        .pipeline-step:nth-child(even)::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            width: 40px;
-            height: 2px;
-            background: var(--primary);
-            transform: translateY(-50%);
-            z-index: -1;
-            box-shadow: 0 0 10px var(--primary);
         }
 
         .step-circle {
@@ -700,23 +747,26 @@
             font-family: 'JetBrains Mono';
             font-weight: bold;
             font-size: 1.2rem;
-            box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
+            box-shadow: 0 0 20px rgba(102, 252, 241, 0.3);
             transition: 0.3s;
             z-index: 2;
+            position: relative;
         }
 
-        .pipeline-step:hover .step-circle {
-            transform: scale(1.15);
-            background-color: var(--primary);
-            color: black;
-            box-shadow: 0 0 30px rgba(102, 252, 241, 0.6);
+        .step-circle::before {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 50%;
+            border: 1px dashed rgba(102, 252, 241, 0.3);
+            animation: spin-cw 10s infinite linear;
         }
 
         .step-content {
-            background: rgba(31, 40, 51, 0.7);
+            background: rgba(18, 20, 26, 0.8);
             border: 1px solid var(--border-color);
             padding: 1.5rem;
-            border-radius: 12px;
+            border-radius: 16px;
             flex-grow: 1;
             transition: 0.3s;
             position: relative;
@@ -724,41 +774,100 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
         }
 
         .pipeline-step:hover .step-content {
             border-color: var(--primary);
             transform: translateY(-5px);
-        }
-
-        .pipeline-step:nth-child(odd) .step-content {
-            margin-right: 2rem;
-        }
-
-        .pipeline-step:nth-child(even) .step-content {
-            margin-left: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
         .step-title {
             color: white;
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 700;
             text-transform: uppercase;
             margin-bottom: 0.5rem;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
         }
 
         .step-desc {
             color: var(--text-muted);
             font-size: 0.85rem;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
         .step-highlight {
             color: var(--primary);
             font-weight: bold;
             font-family: 'JetBrains Mono';
+            text-shadow: 0 0 5px var(--primary);
+        }
+
+        .team-section {
+            padding: 6rem 0;
+            border-top: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .team-card {
+            background-color: rgba(18, 20, 26, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 100%;
+            backdrop-filter: blur(5px);
+        }
+
+        .team-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 15px 30px -10px rgba(102, 252, 241, 0.2);
+        }
+
+        .team-card-img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            object-position: top;
+            border-bottom: 1px solid var(--border-color);
+            filter: grayscale(50%);
+            transition: 0.3s;
+        }
+
+        .team-card:hover .team-card-img {
+            filter: grayscale(0%);
+        }
+
+        .team-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .team-role {
+            font-size: 0.85rem;
+            color: var(--primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.8rem;
+            letter-spacing: 1.5px;
+            display: inline-block;
+            border: 1px solid rgba(102, 252, 241, 0.3);
+            padding: 4px 10px;
+            border-radius: 50px;
+        }
+
+        .team-bio {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            font-style: italic;
         }
 
         @media (max-width: 991px) {
@@ -769,14 +878,8 @@
             .pipeline-step {
                 width: 100%;
                 padding: 0 0 0 70px;
-                margin-bottom: 3rem;
-                align-self: flex-start !important;
                 flex-direction: row !important;
                 text-align: left !important;
-            }
-
-            .pipeline-step::after {
-                display: none;
             }
 
             .step-circle {
@@ -785,72 +888,7 @@
                 left: 0;
                 top: 0;
             }
-
-            .step-content {
-                margin: 0 !important;
-                min-height: auto;
-            }
         }
-
-        /* --- TEAM SECTION --- */
-        .team-section {
-            padding: 6rem 0;
-            border-top: 1px solid var(--border-color);
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        .team-card {
-            background-color: rgba(31, 40, 51, 0.5);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            overflow: hidden;
-            text-align: center;
-            transition: transform 0.3s ease, border-color 0.3s ease;
-            height: 100%;
-            backdrop-filter: blur(5px);
-        }
-
-        .team-card:hover {
-            transform: translateY(-8px);
-            border-color: var(--primary);
-            box-shadow: 0 10px 20px -10px rgba(102, 252, 241, 0.2);
-        }
-
-        .team-card-img {
-            width: 100%;
-            height: 300px;
-            object-fit: cover;
-            object-position: center top;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .team-card-body {
-            padding: 1.5rem;
-        }
-
-        .team-name {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 0.5rem;
-            letter-spacing: 0.5px;
-        }
-
-        .team-role {
-            font-size: 0.9rem;
-            color: var(--primary);
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 0.5rem;
-            letter-spacing: 1px;
-        }
-
-        .team-bio {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            line-height: 1.4;
-        }
-
     </style>
 </head>
 <body>
@@ -860,19 +898,20 @@
 <nav class="navbar-custom">
     <div class="container d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-3">
-            <div style="width:36px; height:36px; background: var(--primary); border-radius: 8px; display:grid; place-items:center; color: #0b0c10;">
+            <div style="width:40px; height:40px; background: rgba(102, 252, 241, 0.1); border: 1px solid var(--primary); border-radius: 10px; display:grid; place-items:center; color: var(--primary); box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);">
                 <i class="fas fa-cube"></i>
             </div>
             <div style="line-height: 1.2;">
-                <div class="fw-bold text-white" style="letter-spacing: 0.5px;">S-BOX ANALYZER</div>
-                <div style="font-size: 0.7rem; color: var(--text-muted);">CRYPTOGRAPHY RESEARCH TOOL</div>
+                <div class="fw-bold text-white" style="letter-spacing: 1px;">S-BOX ANALYZER</div>
+                <div style="font-size: 0.65rem; color: var(--primary); letter-spacing: 2px;">CRYPTOGRAPHY RESEARCH</div>
             </div>
         </div>
         <div class="d-flex align-items-center gap-3">
-            <button onclick="exportReport()" id="exportBtn" class="btn btn-outline-tech hidden"><i
-                    class="fas fa-file-export me-2"></i>Export Data
+            <button onclick="exportReport()" id="exportBtn" class="btn btn-outline-tech hidden btn-sm px-3"><i
+                    class="fas fa-file-alt me-2"></i>Export Data
             </button>
-            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2 rounded-pill">Cryptography Project</span>
+            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2 rounded-pill font-mono"
+                  style="font-size: 0.75rem;"><i class="fas fa-code-branch me-1"></i>v9.0 Final</span>
         </div>
     </div>
 </nav>
@@ -882,18 +921,22 @@
     <div class="container hero-content">
         <div class="row align-items-center g-5">
             <div class="col-lg-7 text-center text-lg-start reveal">
-                <span class="badge rounded-pill border border-primary text-primary bg-primary bg-opacity-10 px-3 py-2 mb-3">
-                    <i class="fas fa-check-circle me-1"></i> Paper by Alamsyah et al.
+                <span class="badge rounded-pill border border-primary text-primary bg-primary bg-opacity-10 px-3 py-2 mb-4 font-mono">
+                    <i class="fas fa-atom me-2"></i>Research by Alamsyah et al.
                 </span>
-                <h1 class="display-3 fw-bold text-white mb-3 tracking-tight">
-                    AES S-Box <span style="color: var(--primary);">Analysis</span> System
-                </h1>
-                <p class="lead text-muted mb-4" style="font-weight: 300;">
-                    Comprehensive cryptographic evaluation tool for Substitution Boxes.
-                    Analyze Non-linearity, SAC, BIC, and Transparency Order with precision.
+                <div class="glitch-wrapper mb-3">
+                    <h1 class="display-3 fw-bold text-white glitch" data-text="AES S-Box Analysis System"
+                        style="line-height: 1.1; letter-spacing: -1px;">
+                        AES S-Box Analysis System
+                    </h1>
+                </div>
+                <p class="lead text-muted mb-5" style="font-weight: 300; max-width: 600px;">
+                    Advanced cryptographic evaluation tool for Substitution Boxes.
+                    Explore the <span class="text-white">Affine Matrix Space</span> with real-time analysis of
+                    Non-linearity, SAC, and Entropy.
                 </p>
                 <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-2">
-                    <div class="feature-pill"><i class="fas fa-university"></i> Universitas Negeri Semarang</div>
+                    <div class="feature-pill"><i class="fas fa-university"></i> UNNES</div>
                     <div class="feature-pill"><i class="fas fa-microchip"></i> 10+ Metrics</div>
                     <div class="feature-pill"><i class="fas fa-project-diagram"></i> Cycle Analysis</div>
                     <div class="feature-pill"><i class="fas fa-lock"></i> CBC Image Test</div>
@@ -910,85 +953,37 @@
             </div>
         </div>
     </div>
-    <a href="#abstract-section" class="scroll-down-btn">
-        <span>Explore Research</span>
-        <i class="fas fa-chevron-down"></i>
-    </a>
+    <a href="#pipeline-section" class="scroll-down-btn"><span>Start Exploring</span><i
+            class="fas fa-chevron-down mt-1"></i></a>
 </header>
-
-<section class="abstract-section reveal" id="abstract-section">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <div class="abstract-card">
-                    <div class="row align-items-center">
-                        <div class="col-md-7">
-                            <span class="section-badge"><i class="fas fa-microscope me-2"></i>Research Overview</span>
-                            <h2 class="abstract-title">Navigating the <span style="color: var(--primary)">Chaos</span>.
-                            </h2>
-                            <p class="abstract-text">
-                                The standard AES S-Box is robust, but is it unique? This research delves into the
-                                <strong class="text-white">Affine Transformation</strong> space, a mathematical cosmos
-                                of <strong class="text-white">2⁶⁴ possibilities</strong>.
-                            </p>
-                            <br>
-                            <p class="abstract-text">
-                                By systematically generating and filtering millions of candidates against strict
-                                cryptographic properties (Bijective, Balanced, Nonlinearity), we isolate <strong>S-Box
-                                K44</strong>—a rare variant that rivals AES in strength while offering distinct
-                                structural advantages for modern encryption standards.
-                            </p>
-                        </div>
-                        <div class="col-md-5 text-center d-none d-md-block">
-                            <i class="fas fa-atom fa-10x"
-                               style="color: rgba(102, 252, 241, 0.1); filter: drop-shadow(0 0 20px var(--primary));"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
 
 <section class="team-section reveal">
     <div class="container">
-        <div class="text-center mb-5">
-            <h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">Meet The Explorers</h6>
-            <h2 class="fw-bold text-white mb-3">Our Team</h2>
-            <p class="text-muted mx-auto" style="max-width: 600px;">
-                Para pejuang yang selamat dari mata kuliah kriptografi
-            </p>
-        </div>
-
+        <div class="text-center mb-5"><h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">Meet The
+            Explorers</h6>
+            <h2 class="fw-bold text-white mb-3">Research Team</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">Para pejuang yang selamat dari mata kuliah
+                kriptografi</p></div>
         <div class="row g-4 justify-content-center">
             <div class="col-md-6 col-lg-3">
-                <div class="team-card">
-                    <img src="/static/img/zuh.jpg" alt="Member Name" class="team-card-img">
-                    <div class="team-card-body">
-                        <h5 class="team-name">M. Mishbakhuz Zuhail</h5>
+                <div class="team-card"><img src="/static/img/zuh.jpg" alt="Member" class="team-card-img">
+                    <div class="team-card-body"><h5 class="team-name">M. Mishbakhuz Zuhail</h5>
                         <div class="team-role">SI BALINAN</div>
-                        <p class="team-bio">Andai gw bisa ngoding, pasti diajak projek sama zuh</p>
-                    </div>
+                        <p class="team-bio">"Andai gw bisa ngoding, pasti diajak projek sama zuh"</p></div>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
-                <div class="team-card">
-                    <img src="/static/img/jeki.jpg" alt="Member Name" class="team-card-img">
-                    <div class="team-card-body">
-                        <h5 class="team-name">Ahmad Muzakki Ahsan</h5>
+                <div class="team-card"><img src="/static/img/jeki.jpg" alt="Member" class="team-card-img">
+                    <div class="team-card-body"><h5 class="team-name">Ahmad Muzakki Ahsan</h5>
                         <div class="team-role">WALI MURID</div>
-                        <p class="team-bio">woy kuncir</p>
-                    </div>
+                        <p class="team-bio">"woy kuncir"</p></div>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
-                <div class="team-card">
-                    <img src="/static/img/gweh.jpg" alt="Member Name" class="team-card-img">
-                    <div class="team-card-body">
-                        <h5 class="team-name">Sheva Aqila Ramadhan</h5>
+                <div class="team-card"><img src="/static/img/gweh.jpg" alt="Member" class="team-card-img">
+                    <div class="team-card-body"><h5 class="team-name">Sheva Aqila Ramadhan</h5>
                         <div class="team-role">MC</div>
-                        <p class="team-bio">belajar menggambar demi bisa gambar myistri sepuasnya</p>
-                    </div>
+                        <p class="team-bio">"belajar menggambar demi bisa gambar myistri sepuasnya"</p></div>
                 </div>
             </div>
         </div>
@@ -997,20 +992,17 @@
 
 <section class="pipeline-section reveal" id="pipeline-section">
     <div class="container">
-        <div class="text-center mb-5">
-            <h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">Methodology</h6>
+        <div class="text-center mb-5"><h6 class="text-primary fw-bold tracking-wide text-uppercase mb-2">
+            Methodology</h6>
             <h2 class="fw-bold text-white">Exploration Pipeline</h2>
-            <p class="text-muted small">Based on paper DOI: 10.1007/s11071-024-10414-3</p>
-        </div>
-
+            <p class="text-muted small">Based on paper DOI: 10.1007/s11071-024-10414-3</p></div>
         <div class="pipeline-wrapper">
             <div class="pipeline-step">
                 <div class="step-circle">1</div>
                 <div class="step-content">
                     <div class="step-title">Affine Matrix Space</div>
-                    <div class="step-desc">
-                        Menentukan matriks affine 8x8. Kombinasi bit ini membentuk ruang pencarian luas <span
-                            class="step-highlight">2⁶⁴</span>.
+                    <div class="step-desc">Menentukan matriks affine 8x8. Kombinasi bit ini membentuk ruang pencarian
+                        luas <span class="step-highlight">2⁶⁴</span>.
                     </div>
                 </div>
             </div>
@@ -1018,9 +1010,8 @@
                 <div class="step-circle">2</div>
                 <div class="step-content">
                     <div class="step-title">Transformation</div>
-                    <div class="step-desc">
-                        Inverse pada GF(2⁸) dengan polinomial irreduksibel <span class="step-highlight">0x11B</span> +
-                        transformasi linear.
+                    <div class="step-desc">Inverse pada GF(2⁸) dengan polinomial irreduksibel <span
+                            class="step-highlight">0x11B</span> + transformasi linear.
                     </div>
                 </div>
             </div>
@@ -1028,8 +1019,8 @@
                 <div class="step-circle">3</div>
                 <div class="step-content">
                     <div class="step-title">S-Box Generation</div>
-                    <div class="step-desc">
-                        Setiap kombinasi matriks & konstanta menghasilkan tabel S-Box berisi 256 nilai unik (0-255).
+                    <div class="step-desc">Setiap kombinasi matriks & konstanta menghasilkan tabel S-Box berisi 256
+                        nilai unik (0-255).
                     </div>
                 </div>
             </div>
@@ -1037,9 +1028,8 @@
                 <div class="step-circle">4</div>
                 <div class="step-content">
                     <div class="step-title">Validation</div>
-                    <div class="step-desc">
-                        Seleksi ketat. Hanya <span class="step-highlight">128 S-Box</span> yang memenuhi kriteria
-                        Balanced & Bijective yang lolos.
+                    <div class="step-desc">Seleksi ketat. Hanya <span class="step-highlight">128 S-Box</span> yang
+                        memenuhi kriteria Balanced & Bijective yang lolos.
                     </div>
                 </div>
             </div>
@@ -1047,8 +1037,8 @@
                 <div class="step-circle">5</div>
                 <div class="step-content">
                     <div class="step-title">Metric Suite</div>
-                    <div class="step-desc">
-                        Pengujian otomatis 10 metrik kriptografi: NL, SAC, BIC, Transparency Order, dll.
+                    <div class="step-desc">Pengujian otomatis 10 metrik kriptografi: NL, SAC, BIC, Transparency Order,
+                        dll.
                     </div>
                 </div>
             </div>
@@ -1056,9 +1046,8 @@
                 <div class="step-circle">6</div>
                 <div class="step-content">
                     <div class="step-title">Result (K44)</div>
-                    <div class="step-desc">
-                        Penentuan pemenang berdasarkan nilai terbaik. <span class="step-highlight">K44</span> terpilih
-                        sebagai kandidat terkuat.
+                    <div class="step-desc">Penentuan pemenang berdasarkan nilai terbaik. <span class="step-highlight">K44</span>
+                        terpilih sebagai kandidat terkuat.
                     </div>
                 </div>
             </div>
@@ -1070,9 +1059,8 @@
     <div class="row g-4">
         <div class="col-lg-4" id="sidebarCol">
             <div class="tech-card h-100">
-                <div class="card-header-tech"><i class="fas fa-cog"></i> Configuration</div>
+                <div class="card-header-tech"><i class="fas fa-cog"></i> Configuration Panel</div>
                 <div class="p-4">
-
                     <div class="d-flex gap-2 mb-4 p-1 bg-black rounded border border-secondary border-opacity-25">
                         <button class="btn btn-outline-tech w-50 active btn-sm" onclick="switchMode('db')"
                                 id="btn-mode-db">Database
@@ -1084,67 +1072,71 @@
 
                     <div id="mode-db-container">
                         <div class="mb-4">
-                            <label class="small text-muted fw-bold mb-2">SELECT S-BOX</label>
+                            <label class="m-label">SELECT S-BOX</label>
                             <select id="jsonSelect" class="form-select" onchange="loadFromJSON()">
                                 <option value="" disabled selected>Loading Database...</option>
                             </select>
+                        </div>
+                        <div class="mb-4 pt-3 border-top border-secondary border-opacity-25">
+                            <label class="m-label mb-2">OR UPLOAD EXCEL</label>
+                            <div class="input-group">
+                                <input type="file" id="excelInput" class="form-control" accept=".xlsx, .xls">
+                                <button class="btn btn-outline-tech" type="button" onclick="uploadExcel()"><i
+                                        class="fas fa-upload"></i></button>
+                            </div>
+                            <div class="small text-muted mt-1" style="font-size: 0.65rem;">Format: 16x16 grid or list of
+                                256 integers.
+                            </div>
                         </div>
                     </div>
 
                     <div id="mode-custom-container" class="hidden">
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="small text-muted fw-bold">AFFINE MATRIX (8x8)</label>
+                                <label class="m-label">AFFINE MATRIX (8x8)</label>
                                 <button onclick="resetMatrix()" class="btn btn-link btn-sm text-muted p-0"
                                         style="font-size: 0.7rem;">Reset
                                 </button>
                             </div>
                             <div class="affine-grid-input" id="input-matrix"></div>
                         </div>
-
                         <div class="mb-4">
-                            <label class="small text-muted fw-bold mb-2">ADDITIVE CONSTANT (C)</label>
+                            <label class="m-label mb-2">ADDITIVE CONSTANT (C)</label>
                             <div class="constant-grid-input" id="input-constant"></div>
                         </div>
-
-                        <button onclick="generateCustomSBox()" class="btn btn-outline-tech w-100 mb-3"><i
+                        <button onclick="generateCustomSBox()" class="btn btn-primary-tech mb-3"><i
                                 class="fas fa-microchip me-2"></i>Generate S-Box
                         </button>
                     </div>
 
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="small text-muted fw-bold">VISUAL MAP</label>
-                            <span class="small text-muted" id="insp-hex-s">0x--</span>
+                            <label class="m-label">VISUAL MAP</label>
+                            <span class="small font-mono text-primary" id="insp-hex-s">0x--</span>
                         </div>
-                        <div id="visualGrid" class="grid-16" onmouseleave="clearInspector()"></div>
+                        <div class="grid-wrapper">
+                            <div id="visualGrid" class="grid-16" onmouseleave="clearInspector()"></div>
+                        </div>
                     </div>
 
                     <div class="bg-black rounded p-3 mb-4 border border-secondary border-opacity-25 font-mono"
                          style="font-size: 0.85rem;">
                         <div class="d-flex justify-content-between border-bottom border-secondary border-opacity-25 pb-2 mb-2">
-                            <span class="text-muted">INDEX</span>
-                            <span class="text-white" id="insp-idx">-</span>
+                            <span class="text-muted">INDEX</span><span class="text-white" id="insp-idx">-</span>
                         </div>
                         <div class="d-flex justify-content-between border-bottom border-secondary border-opacity-25 pb-2 mb-2">
-                            <span class="text-muted">VALUE (DEC)</span>
-                            <span class="text-white" id="insp-dec">-</span>
+                            <span class="text-muted">VALUE (DEC)</span><span class="text-white" id="insp-dec">-</span>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span class="text-muted">BINARY</span>
-                            <span style="color: var(--primary);" id="insp-bin">-</span>
+                            <span class="text-muted">BINARY</span><span style="color: var(--primary);"
+                                                                        id="insp-bin">-</span>
                         </div>
-                    </div>
-
-                    <div id="affineSection" class="hidden mb-4 text-center">
-                        <label class="small text-muted fw-bold mb-2 d-block">AFFINE MATRIX</label>
-                        <div id="matrixGrid" class="matrix-grid"></div>
                     </div>
 
                     <div class="mb-3">
                         <button class="btn btn-link btn-sm text-muted text-decoration-none p-0 mb-2" type="button"
                                 data-bs-toggle="collapse" data-bs-target="#manualBox">
-                            <i class="fas fa-edit me-1"></i> Manual Input
+                            <i class="fas fa-edit me-1"></i> Manual Input (Text)
                         </button>
                         <div class="collapse" id="manualBox">
                             <textarea id="sboxInput" class="form-control font-mono" style="font-size: 0.8rem;" rows="3"
@@ -1214,7 +1206,6 @@
                                     <div class="m-target">Max: 7</div>
                                 </div>
                             </div>
-
                             <div class="col-md-3 col-6">
                                 <div class="metric-box">
                                     <div class="m-label">BIC-NL</div>
@@ -1243,7 +1234,6 @@
                                     <div class="m-target">Target: 256</div>
                                 </div>
                             </div>
-
                             <div class="col-md-3 col-6">
                                 <div class="metric-box">
                                     <div class="m-label">Transparency</div>
@@ -1272,14 +1262,12 @@
                                     <div class="m-target">Min Prob</div>
                                 </div>
                             </div>
-
                             <div class="col-12">
                                 <div class="metric-box"
                                      style="border-color: var(--success); background: rgba(16, 185, 129, 0.05);">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <div class="m-label" style="color: var(--success);">STRENGTH VALUE (SV) -
-                                                PAPER METRIC
+                                            <div class="m-label" style="color: var(--success);">STRENGTH VALUE (SV)
                                             </div>
                                             <div class="small text-muted">Combined score based on NL, SAC, and BIC.
                                                 Lower is better.
@@ -1301,20 +1289,22 @@
                         <div class="card-header-tech"><i class="fas fa-balance-scale"></i> Direct Comparison</div>
                         <div class="p-4">
                             <div class="row g-3 align-items-end mb-4">
-                                <div class="col-md-5">
-                                    <label class="small text-muted fw-bold mb-1">REFERENCE (A)</label>
-                                    <select id="compSelectA" class="form-select"></select>
-                                </div>
-                                <div class="col-md-5">
-                                    <label class="small text-muted fw-bold mb-1">CANDIDATE (B)</label>
-                                    <select id="compSelectB" class="form-select"></select>
-                                </div>
+                                <div class="col-md-5"><label class="m-label mb-1">REFERENCE (A)</label><select
+                                        id="compSelectA" class="form-select"></select></div>
+                                <div class="col-md-5"><label class="m-label mb-1">CANDIDATE (B)</label><select
+                                        id="compSelectB" class="form-select"></select></div>
                                 <div class="col-md-2">
                                     <button onclick="runComparison()" class="btn btn-primary-tech"><i
                                             class="fas fa-play"></i></button>
                                 </div>
                             </div>
-
+                            <div class="row mb-4">
+                                <div class="col-md-8 offset-md-2">
+                                    <div style="height: 300px; width: 100%;">
+                                        <canvas id="radarChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-tech align-middle">
                                     <thead>
@@ -1328,7 +1318,7 @@
                                     <tbody id="comparisonTableBody">
                                     <tr>
                                         <td colspan="4" class="text-center text-muted py-5">Select two S-Boxes above to
-                                            compare their cryptographic properties.
+                                            compare.
                                         </td>
                                     </tr>
                                     </tbody>
@@ -1343,15 +1333,16 @@
                         <div class="card-header-tech"><i class="fas fa-font"></i> Text Encryption</div>
                         <div class="p-4">
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="small text-muted fw-bold">INPUT TEXT</label>
-                                    <input type="text" id="txtInput" class="form-control mt-1"
-                                           placeholder="Type secret message...">
+                                <div class="col-md-6"><label class="m-label">INPUT TEXT</label><input type="text"
+                                                                                                      id="txtInput"
+                                                                                                      class="form-control mt-1"
+                                                                                                      placeholder="Type secret message...">
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="small text-muted fw-bold">OUTPUT (HEX/TEXT)</label>
-                                    <input type="text" id="txtResult" class="form-control mt-1"
-                                           style="color: var(--success) !important;" readonly>
+                                <div class="col-md-6"><label class="m-label">OUTPUT (HEX/TEXT)</label><input type="text"
+                                                                                                             id="txtResult"
+                                                                                                             class="form-control mt-1"
+                                                                                                             style="color: var(--success) !important;"
+                                                                                                             readonly>
                                 </div>
                             </div>
                             <div class="d-flex gap-2 mt-3">
@@ -1362,20 +1353,14 @@
                                         class="fas fa-unlock me-2"></i>Decrypt
                                 </button>
                             </div>
-                            <div class="text-end mt-2">
-                                <button onclick="moveResult()"
-                                        class="btn btn-link btn-sm text-muted text-decoration-none">Move Output to Input
-                                    <i class="fas fa-arrow-up"></i></button>
-                            </div>
                         </div>
                     </div>
 
                     <div class="tech-card">
                         <div class="card-header-tech"><i class="fas fa-image"></i> Image Encryption (CBC Mode)</div>
                         <div class="p-4">
-                            <div class="input-group mb-3">
-                                <input type="file" id="imgInput" class="form-control" accept="image/*">
-                            </div>
+                            <div class="input-group mb-3"><input type="file" id="imgInput" class="form-control"
+                                                                 accept="image/*"></div>
                             <div class="row g-2 mb-3">
                                 <div class="col-6">
                                     <button onclick="doImage('encrypt')" class="btn btn-outline-tech w-100">Encrypt
@@ -1391,110 +1376,110 @@
                             <div id="imgPreviewArea"
                                  class="hidden text-center p-3 bg-black rounded border border-secondary border-opacity-25 mt-3">
                                 <div class="row">
-                                    <div class="col-md-6 d-flex align-items-center justify-content-center">
+                                    <div class="col-md-5 d-flex flex-column align-items-center">
                                         <img id="imgResult" class="img-fluid mb-2"
-                                             style="max-height: 300px; border-radius: 4px; border: 1px solid #333;">
+                                             style="max-height: 250px; border-radius: 4px; border: 1px solid #333;">
+                                        <a id="dlBtn" class="btn btn-sm btn-primary-tech mt-2 w-100"
+                                           download="result.png"><i class="fas fa-download me-2"></i>Download</a>
                                     </div>
-
-                                    <div class="col-md-6">
+                                    <div class="col-md-7">
                                         <div id="statsPanel" class="text-start hidden">
-                                            <h6 class="text-primary small fw-bold mb-3 border-bottom border-secondary pb-2">
-                                                ENCRYPTION QUALITY METRICS</h6>
+                                            <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-1 mb-2">
+                                                <h6 class="text-primary small fw-bold mb-0">HISTOGRAM ANALYSIS</h6>
+                                                <button onclick="resetChartZoom()"
+                                                        class="btn btn-link btn-sm text-muted p-0"
+                                                        style="font-size: 0.65rem; text-decoration: none;"><i
+                                                        class="fas fa-search-minus me-1"></i>Reset Zoom
+                                                </button>
+                                            </div>
 
-                                            <div class="mb-3">
-                                                <div class="d-flex justify-content-between small text-muted">
-                                                    <span>Entropy (Ideal: 8.0)</span>
-                                                    <span id="val-entropy" class="text-white fw-bold">-</span>
+                                            <div style="height: 150px; width: 100%; position: relative;">
+                                                <canvas id="histChart"></canvas>
+                                            </div>
+                                            <div class="text-center text-muted fst-italic mt-1"
+                                                 style="font-size: 0.6rem;">*Scroll/Pinch to Zoom, Drag to Pan
+                                            </div>
+
+                                            <h6 class="text-primary small fw-bold mt-3 mb-2 border-bottom border-secondary pb-1">
+                                                QUALITY METRICS</h6>
+
+                                            <div class="row g-2">
+                                                <div class="col-4">
+                                                    <div class="bg-dark rounded p-2 text-center border border-secondary"
+                                                         style="border-color: #333 !important;">
+                                                        <div class="text-muted"
+                                                             style="font-size:0.6rem; letter-spacing: 1px;">ENTROPY
+                                                        </div>
+                                                        <div id="val-entropy"
+                                                             class="text-white small fw-bold font-mono">-
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div class="progress" style="height: 4px;">
-                                                    <div id="bar-entropy" class="progress-bar bg-success"
-                                                         style="width: 0%"></div>
+                                                <div class="col-4">
+                                                    <div class="bg-dark rounded p-2 text-center border border-secondary"
+                                                         style="border-color: #333 !important;">
+                                                        <div class="text-muted"
+                                                             style="font-size:0.6rem; letter-spacing: 1px;">NPCR
+                                                        </div>
+                                                        <div id="val-npcr" class="text-white small fw-bold font-mono">
+                                                            -
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="bg-dark rounded p-2 text-center border border-secondary"
+                                                         style="border-color: #333 !important;">
+                                                        <div class="text-muted"
+                                                             style="font-size:0.6rem; letter-spacing: 1px;">UACI
+                                                        </div>
+                                                        <div id="val-uaci" class="text-white small fw-bold font-mono">
+                                                            -
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <div class="mb-3">
-                                                <div class="d-flex justify-content-between small text-muted">
-                                                    <span>NPCR (Ideal: >99%)</span>
-                                                    <span id="val-npcr" class="text-white fw-bold">-</span>
+                                            <div class="bg-dark rounded p-2 border border-secondary mt-2"
+                                                 style="border-color: #333 !important;">
+                                                <div class="text-muted mb-1 text-center"
+                                                     style="font-size:0.65rem; letter-spacing: 1px;">PIXEL CORRELATION
+                                                    (H / V / D)
                                                 </div>
-                                                <div class="progress" style="height: 4px;">
-                                                    <div id="bar-npcr" class="progress-bar bg-info"
-                                                         style="width: 0%"></div>
-                                                </div>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <div class="d-flex justify-content-between small text-muted">
-                                                    <span>UACI (Ideal: ~33%)</span>
-                                                    <span id="val-uaci" class="text-white fw-bold">-</span>
-                                                </div>
-                                                <div class="progress" style="height: 4px;">
-                                                    <div id="bar-uaci" class="progress-bar bg-warning"
-                                                         style="width: 0%"></div>
-                                                </div>
-                                            </div>
-
-                                            <div class="bg-dark rounded p-2 border border-secondary">
-                                                <div class="small text-muted mb-1 text-center">Pixel Correlation (Ideal:
-                                                    ~0)
-                                                </div>
-                                                <div class="d-flex justify-content-between px-2">
-                                                    <div class="text-center">
-                                                        <div class="small text-muted" style="font-size: 0.65rem;">HOR
-                                                        </div>
-                                                        <div id="val-corr-h" class="text-white small">-</div>
-                                                    </div>
-                                                    <div class="text-center">
-                                                        <div class="small text-muted" style="font-size: 0.65rem;">VER
-                                                        </div>
-                                                        <div id="val-corr-v" class="text-white small">-</div>
-                                                    </div>
-                                                    <div class="text-center">
-                                                        <div class="small text-muted" style="font-size: 0.65rem;">DIAG
-                                                        </div>
-                                                        <div id="val-corr-d" class="text-white small">-</div>
-                                                    </div>
+                                                <div class="d-flex justify-content-between px-2 text-white small font-mono">
+                                                    <span id="val-corr-h">-</span><span id="val-corr-v">-</span><span
+                                                        id="val-corr-d">-</span>
                                                 </div>
                                             </div>
                                         </div>
-
-                                        <div id="decryptMsg" class="hidden text-center py-5 text-muted small">
-                                            <i>Metrics are not calculated for decryption.</i>
-                                        </div>
+                                        <div id="decryptMsg" class="hidden text-center py-5 text-muted small"><i>Analysis
+                                            is available for Encryption mode only.</i></div>
                                     </div>
                                 </div>
-
-                                <a id="dlBtn" class="btn btn-sm btn-primary-tech mt-3 w-100" download="result.png">
-                                    <i class="fas fa-download me-2"></i>Download Result
-                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 </div>
 
 <footer class="py-4 text-center text-muted border-top border-dark"
-        style="background: rgba(31, 40, 51, 0.9); font-size: 0.85rem;">
-    <div class="container">
-        © 2025 Universitas Negeri Semarang. Cryptography Research Project.
-    </div>
+        style="background: rgba(10, 10, 12, 0.9); font-size: 0.85rem;">
+    <div class="container">© 2025 Universitas Negeri Semarang. Cryptography Research Project.</div>
 </footer>
-
 
 <div id="loader">
     <div class="spinner mb-3"></div>
     <div class="text-white small fw-bold tracking-wide">PROCESSING</div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // --- INTERACTIVE CONSTELLATION ---
     const canvas = document.getElementById('constellation-canvas');
     const ctx = canvas.getContext('2d');
-    let stars = [];
-    let w, h;
+    let stars = [], w, h, mouse = {x: null, y: null};
 
     function resize() {
         w = canvas.width = window.innerWidth;
@@ -1505,13 +1490,17 @@
         resize();
         initStars();
     });
+    window.addEventListener('mousemove', (e) => {
+        mouse.x = e.x;
+        mouse.y = e.y;
+    });
     resize();
 
     class Star {
         constructor() {
             this.x = Math.random() * w;
             this.y = Math.random() * h;
-            this.vx = (Math.random() - 0.5) * 0.5; // Kecepatan pelan
+            this.vx = (Math.random() - 0.5) * 0.5;
             this.vy = (Math.random() - 0.5) * 0.5;
             this.size = Math.random() * 2;
         }
@@ -1533,29 +1522,33 @@
 
     function initStars() {
         stars = [];
-        const count = Math.floor((w * h) / 10000); // Kepadatan bintang
-        for (let i = 0; i < count; i++) stars.push(new Star());
+        for (let i = 0; i < Math.floor(w * h / 10000); i++) stars.push(new Star());
     }
 
     function animate() {
         ctx.clearRect(0, 0, w, h);
-
-        // Draw Connections
         for (let i = 0; i < stars.length; i++) {
             stars[i].update();
             stars[i].draw();
-
             for (let j = i + 1; j < stars.length; j++) {
-                let dx = stars[i].x - stars[j].x;
-                let dy = stars[i].y - stars[j].y;
-                let dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist < 100) { // Jarak koneksi
+                let dx = stars[i].x - stars[j].x, dy = stars[i].y - stars[j].y, dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 100) {
                     ctx.beginPath();
-                    ctx.strokeStyle = `rgba(102, 252, 241, ${1 - dist / 100})`; // Fade out line
+                    ctx.strokeStyle = `rgba(102, 252, 241, ${1 - dist / 100})`;
                     ctx.lineWidth = 0.5;
                     ctx.moveTo(stars[i].x, stars[i].y);
                     ctx.lineTo(stars[j].x, stars[j].y);
+                    ctx.stroke();
+                }
+            }
+            if (mouse.x) {
+                let dx = stars[i].x - mouse.x, dy = stars[i].y - mouse.y, dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 150) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(102, 252, 241, ${1 - dist / 150})`;
+                    ctx.lineWidth = 0.8;
+                    ctx.moveTo(stars[i].x, stars[i].y);
+                    ctx.lineTo(mouse.x, mouse.y);
                     ctx.stroke();
                 }
             }
@@ -1565,22 +1558,20 @@
 
     initStars();
     animate();
-
-    // Scroll Reveal Logic
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) entry.target.classList.add('active');
         });
     }, {threshold: 0.1});
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-</script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+    // --- APP LOGIC ---
     let sboxDatabase = [];
-    let currentMetrics = null;
     let customMatrix = Array(64).fill(0);
     let customConstant = Array(8).fill(0);
+    let chartInstance = null;
+    let radarChartInstance = null;
+    let currentMetrics = null;
 
     window.onload = async () => {
         try {
@@ -1599,19 +1590,16 @@
                 compB.appendChild(new Option(c.name, c.index));
             });
             renderGrid(new Array(256).fill(0));
-            initCustomInputs(); // Initialize the clickable grids
+            initCustomInputs();
         } catch (e) {
         }
     };
 
-    // --- NEW: CUSTOM MATRIX LOGIC ---
     function initCustomInputs() {
         const matGrid = document.getElementById('input-matrix');
         const constGrid = document.getElementById('input-constant');
         matGrid.innerHTML = '';
         constGrid.innerHTML = '';
-
-        // Matrix A (8x8)
         for (let i = 0; i < 64; i++) {
             const btn = document.createElement('div');
             btn.className = 'bit-btn';
@@ -1619,7 +1607,6 @@
             btn.onclick = () => toggleBit(btn, i, 'matrix');
             matGrid.appendChild(btn);
         }
-        // Constant C (1x8)
         for (let i = 0; i < 8; i++) {
             const btn = document.createElement('div');
             btn.className = 'bit-btn';
@@ -1633,12 +1620,11 @@
         if (type === 'matrix') {
             customMatrix[idx] = customMatrix[idx] ? 0 : 1;
             el.innerText = customMatrix[idx];
-            el.classList.toggle('active');
         } else {
             customConstant[idx] = customConstant[idx] ? 0 : 1;
             el.innerText = customConstant[idx];
-            el.classList.toggle('active');
         }
+        el.classList.toggle('active');
     }
 
     function resetMatrix() {
@@ -1664,41 +1650,48 @@
         }
     }
 
-    async function generateCustomSBox() {
-        // Prepare Payload
-        const payload = {
-            matrix: customMatrix,
-            constant: customConstant
-        };
-
+    async function uploadExcel() {
+        const fileInput = document.getElementById('excelInput');
+        const file = fileInput.files[0];
+        if (!file) return alert("Please select an Excel file (.xlsx) first.");
+        const fd = new FormData();
+        fd.append('file', file);
         document.getElementById('loader').style.display = 'flex';
-
-        // PENTING: Anda harus menambahkan endpoint '/api/generate_custom' di app.py
-        // Jika belum ada, fungsi ini hanya akan alert error.
         try {
-            const res = await fetch('/api/generate_custom', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
+            const res = await fetch('/api/upload_excel', {method: 'POST', body: fd});
             const data = await res.json();
             document.getElementById('loader').style.display = 'none';
-
             if (data.status === 'success') {
                 document.getElementById('sboxInput').value = data.sbox.join(', ');
                 renderGrid(data.sbox);
-                // Auto Analyze after generation
+                alert("Excel Uploaded! Analyzing S-Box...");
                 analyze();
-            } else {
-                alert("Generation Error: " + (data.error || "Unknown"));
-            }
+            } else alert("Error: " + data.error);
         } catch (e) {
             document.getElementById('loader').style.display = 'none';
-            alert("Backend Error: Pastikan endpoint '/api/generate_custom' sudah ada di app.py Anda.\n\n" + e);
+            alert("Error: " + e);
         }
     }
 
-    // ---------------------------------
+    async function generateCustomSBox() {
+        document.getElementById('loader').style.display = 'flex';
+        try {
+            const res = await fetch('/api/generate_custom', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({matrix: customMatrix, constant: customConstant})
+            });
+            const data = await res.json();
+            document.getElementById('loader').style.display = 'none';
+            if (data.status === 'success') {
+                document.getElementById('sboxInput').value = data.sbox.join(', ');
+                renderGrid(data.sbox);
+                analyze();
+            } else alert("Error: " + data.error);
+        } catch (e) {
+            document.getElementById('loader').style.display = 'none';
+            alert("Error: " + e);
+        }
+    }
 
     function toggleSidebar(show) {
         const sb = document.getElementById('sidebarCol');
@@ -1719,30 +1712,10 @@
         if (data.status === 'success') {
             document.getElementById('sboxInput').value = data.sbox.join(', ');
             renderGrid(data.sbox);
-            const matDiv = document.getElementById('affineSection');
-            if (data.matrix) {
-                matDiv.classList.remove('hidden');
-                renderMatrix(data.matrix);
-            } else {
-                matDiv.classList.add('hidden');
-            }
             document.getElementById('results').classList.add('hidden');
             document.getElementById('welcomeState').classList.remove('hidden');
             document.getElementById('exportBtn').classList.add('hidden');
         }
-    }
-
-    function renderMatrix(matrix) {
-        const grid = document.getElementById('matrixGrid');
-        grid.innerHTML = '';
-        matrix.forEach(row => {
-            row.forEach(bit => {
-                const div = document.createElement('div');
-                div.className = `bit ${bit ? 'active' : ''}`;
-                div.innerText = bit;
-                grid.appendChild(div);
-            });
-        });
     }
 
     function renderGrid(arr) {
@@ -1751,13 +1724,10 @@
         arr.forEach((val, idx) => {
             const div = document.createElement('div');
             div.className = 'cell';
-            const hue = 180 + (val / 255 * 30); /* Cyan based hue */
-            const light = 20 + (val / 255 * 40);
-            div.style.backgroundColor = `hsl(${hue}, 60%, ${light}%)`;
-
-            // Hex value inside grid
+            const hue = 180 + (val / 255 * 30);
+            div.style.backgroundColor = `hsl(${hue}, 60%, ${20 + (val / 255 * 40)}%)`;
             div.innerText = val.toString(16).toUpperCase().padStart(2, '0');
-
+            div.style.animationDelay = `${idx * 2}ms`;
             div.onmouseenter = () => updateInspector(idx, val);
             grid.appendChild(div);
         });
@@ -1766,8 +1736,7 @@
     function updateInspector(idx, val) {
         document.getElementById('insp-idx').innerText = idx;
         document.getElementById('insp-dec').innerText = val;
-        const hex = "0x" + val.toString(16).toUpperCase().padStart(2, '0');
-        document.getElementById('insp-hex-s').innerText = hex;
+        document.getElementById('insp-hex-s').innerText = "0x" + val.toString(16).toUpperCase().padStart(2, '0');
         document.getElementById('insp-bin').innerText = val.toString(2).padStart(8, '0');
     }
 
@@ -1788,13 +1757,14 @@
     async function analyze() {
         const sbox = getSbox();
         if (!sbox || sbox.length !== 256) {
-            alert("S-Box must contain exactly 256 integers.");
+            alert("S-Box must be 256 ints.");
             return;
         }
         document.getElementById('loader').style.display = 'flex';
         try {
             const res = await fetch('/api/analyze', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({sbox: sbox})
             });
             const d = await res.json();
@@ -1808,8 +1778,8 @@
                 const txt = (id, v) => document.getElementById(id).innerText = v;
                 txt('resNL', m.NL);
                 txt('resSAC', m.SAC.toFixed(4));
-                txt('resAD', m.AD);
                 txt('resDU', m.DU);
+                txt('resAD', m.AD);
                 txt('resBIC', m.BIC_NL);
                 txt('resBICSAC', m.BIC_SAC.toFixed(4));
                 txt('resLAP', m.LAP.toFixed(4));
@@ -1826,8 +1796,7 @@
     }
 
     function exportReport() {
-        if (!currentMetrics) return;
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        if (!currentMetrics) return alert("Analyze first!");
         const sboxName = document.getElementById('jsonSelect').options[document.getElementById('jsonSelect').selectedIndex]?.text || "Custom";
         let report = `S-BOX ANALYSIS REPORT\nGenerated: ${new Date().toLocaleString()}\nTarget: ${sboxName}\n-----------------------------\n`;
         const m = currentMetrics;
@@ -1836,7 +1805,7 @@
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Report_${sboxName.replace(/\s+/g, '_')}_${timestamp}.txt`;
+        a.download = `Report_${sboxName.replace(/\s+/g, '_')}.txt`;
         a.click();
         window.URL.revokeObjectURL(url);
     }
@@ -1844,172 +1813,256 @@
     async function runComparison() {
         const idxA = document.getElementById('compSelectA').value;
         const idxB = document.getElementById('compSelectB').value;
-        if (!idxA || !idxB) {
-            alert("Select both S-Boxes!");
-            return;
-        }
+        if (!idxA || !idxB) return alert("Select both!");
         document.getElementById('loader').style.display = 'flex';
         try {
-            const resA = await fetch(`/api/get_sbox/${idxA}`);
-            const dataA = await resA.json();
-            const resB = await fetch(`/api/get_sbox/${idxB}`);
-            const dataB = await resB.json();
+            const resA = await (await fetch(`/api/get_sbox/${idxA}`)).json();
+            const resB = await (await fetch(`/api/get_sbox/${idxB}`)).json();
             const metA = await (await fetch('/api/analyze', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({sbox: dataA.sbox})
+                body: JSON.stringify({sbox: resA.sbox})
             })).json();
             const metB = await (await fetch('/api/analyze', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({sbox: dataB.sbox})
+                body: JSON.stringify({sbox: resB.sbox})
             })).json();
-            generateCompTable(metA.metrics, metB.metrics);
-        } catch (e) {
-            alert("Error comparing");
-        } finally {
             document.getElementById('loader').style.display = 'none';
+
+            const tbody = document.getElementById('comparisonTableBody');
+            tbody.innerHTML = '';
+            const metrics = [{id: 'NL', name: 'Nonlinearity', target: 112}, {
+                id: 'SAC',
+                name: 'SAC',
+                target: 0.5
+            }, {id: 'BIC_NL', name: 'BIC-NL', target: 112}, {id: 'BIC_SAC', name: 'BIC-SAC', target: 0.5}, {
+                id: 'DU',
+                name: 'Diff. Uniformity',
+                target: 4
+            }, {id: 'AD', name: 'Alg. Degree', target: 7}, {id: 'SV_PAPER', name: 'Strength Value', target: 0}];
+            metrics.forEach(m => {
+                const vA = metA.metrics[m.id], vB = metB.metrics[m.id];
+                let win = 'Tie';
+                if (m.id === 'DU' || m.id === 'SV_PAPER') {
+                    if (vA < vB) win = 'Ref Win'; else if (vB < vA) win = 'Cand Win';
+                } else if (m.id.includes('SAC')) {
+                    if (Math.abs(vA - 0.5) < Math.abs(vB - 0.5)) win = 'Ref Win'; else if (Math.abs(vB - 0.5) < Math.abs(vA - 0.5)) win = 'Cand Win';
+                } else {
+                    if (vA > vB) win = 'Ref Win'; else if (vB > vA) win = 'Cand Win';
+                }
+                tbody.innerHTML += `<tr><td class="small text-muted">${m.name}</td><td class="text-center text-white">${Number(vA).toFixed(4)}</td><td class="text-center text-white">${Number(vB).toFixed(4)}</td><td class="text-center small ${win.includes('Cand') ? 'text-win' : 'text-muted'}">${win}</td></tr>`;
+            });
+            renderRadarChart(metA.metrics, metB.metrics);
+        } catch (e) {
+            document.getElementById('loader').style.display = 'none';
+            alert("Error running comparison.");
         }
     }
 
-    function generateCompTable(mA, mB) {
-        const tbody = document.getElementById('comparisonTableBody');
-        tbody.innerHTML = '';
-        const metrics = [
-            {id: 'NL', name: 'Nonlinearity', targetVal: 112, better: 'higher'},
-            {id: 'SAC', name: 'SAC', targetVal: 0.5, better: 'closer'},
-            {id: 'BIC_NL', name: 'BIC-NL', targetVal: 112, better: 'higher'},
-            {id: 'BIC_SAC', name: 'BIC-SAC', targetVal: 0.5, better: 'closer'},
-            {id: 'DU', name: 'Diff. Uniformity', targetVal: 4, better: 'lower'},
-            {id: 'AD', name: 'Alg. Degree', targetVal: 7, better: 'higher'},
-            {id: 'TO', name: 'Transparency Order', better: 'lower'},
-            {id: 'SV_PAPER', name: 'Strength Value (SV)', better: 'lower'},
-            {id: 'FIXED', name: 'Fixed Points', better: 'lower'},
-            {id: 'CYC_MAX', name: 'Max Cycle', better: 'higher'}
+    function renderRadarChart(mA, mB) {
+        const ctx = document.getElementById('radarChart').getContext('2d');
+        if (radarChartInstance) radarChartInstance.destroy();
+
+        // --- HIGH SENSITIVITY NORMALIZATION ---
+        // Kita memperbesar skala penalti agar perbedaan koma (desimal) terlihat jelas
+
+        const norm = (m) => [
+            // 1. NL: Tetap standar (Max 112)
+            (m.NL / 112) * 100,
+
+            // 2. SAC: SENSITIF!
+            // Penyimpangan 0.01 saja akan mengurangi skor sebanyak 20 poin
+            // Rumus: 100 - (|0.5 - SAC| * 2000)
+            Math.max(0, 100 - (Math.abs(0.5 - m.SAC) * 2000)),
+
+            // 3. BIC-NL: Standar
+            (m.BIC_NL / 112) * 100,
+
+            // 4. Strength Value (SV): SENSITIF!
+            // Target 0. Jika nilai 0.5, skor turun jadi 50.
+            // Rumus: 100 - (SV * 100)
+            Math.max(0, 100 - (m.SV_PAPER * 100)),
+
+            // 5. BIC-SAC: SENSITIF!
+            Math.max(0, 100 - (Math.abs(0.5 - m.BIC_SAC) * 2000))
         ];
-        metrics.forEach(m => {
-            const vA = mA[m.id];
-            const vB = mB[m.id];
-            let winner = '-';
-            let classA = '';
-            let classB = '';
-            const fmt = (v) => Number.isInteger(v) ? v : Number(v).toFixed(4).replace(/\.0000$/, '');
-            if (vA !== vB) {
-                let isAWin = false;
-                if (m.better === 'higher') isAWin = vA > vB;
-                else if (m.better === 'lower') isAWin = vA < vB;
-                else if (m.better === 'closer') isAWin = Math.abs(vA - m.targetVal) < Math.abs(vB - m.targetVal);
-                if (isAWin) {
-                    winner = 'Ref (A)';
-                    classA = 'text-win';
-                    classB = 'text-lose';
-                } else {
-                    winner = 'Cand (B)';
-                    classB = 'text-win';
-                    classA = 'text-lose';
+
+        radarChartInstance = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['Nonlinearity (NL)', 'SAC Consistency', 'BIC-NL Score', 'Strength Value (Inv)', 'BIC-SAC Quality'],
+                datasets: [
+                    {
+                        label: 'Reference (A)',
+                        data: norm(mA),
+                        fill: true,
+                        backgroundColor: 'rgba(239, 68, 68, 0.2)', // Merah Transparan
+                        borderColor: '#ef4444',
+                        pointBackgroundColor: '#ef4444',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Candidate (B)',
+                        data: norm(mB),
+                        fill: true,
+                        backgroundColor: 'rgba(102, 252, 241, 0.2)', // Cyan Transparan
+                        borderColor: '#66fcf1',
+                        pointBackgroundColor: '#66fcf1',
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: {color: '#333'},
+                        grid: {color: '#222'}, // Grid lebih gelap
+                        pointLabels: {
+                            color: '#94a3b8',
+                            font: {size: 10, family: 'Inter'}
+                        },
+                        ticks: {display: false}, // Hilangkan angka axis biar bersih
+                        suggestedMin: 50, // Zoom in ke range 50-100 biar bedanya kelihatan
+                        suggestedMax: 100
+                    }
+                },
+                plugins: {
+                    legend: {labels: {color: '#e0e6ed'}},
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ': ' + context.raw.toFixed(1) + ' Pts';
+                            }
+                        }
+                    }
                 }
-            } else winner = 'Tie';
-            const row = `
-                <tr>
-                    <td class="fw-bold text-muted small text-uppercase">${m.name}</td>
-                    <td class="text-center ${classA}">${fmt(vA)}</td>
-                    <td class="text-center ${classB}">${fmt(vB)}</td>
-                    <td class="text-center fw-bold small ${winner.includes('Ref') ? 'text-primary' : (winner.includes('Cand') ? 'text-success' : 'text-muted')}">${winner}</td>
-                </tr>
-            `;
-            tbody.innerHTML += row;
+            }
         });
     }
 
     function moveResult() {
-        const res = document.getElementById('txtResult').value;
-        if (res) {
-            document.getElementById('txtInput').value = res;
-            document.getElementById('txtResult').value = "";
-        }
+        document.getElementById('txtInput').value = document.getElementById('txtResult').value;
+        document.getElementById('txtResult').value = "";
     }
 
     async function doText(mode) {
         const sbox = getSbox();
-        if (!sbox || sbox.length !== 256) return alert("Error: Please select a valid S-Box first (must be 256 numbers).");
+        if (!sbox) return;
         const txt = document.getElementById('txtInput').value;
-        if (!txt) return alert("Input empty!");
+        if (!txt) return;
         const res = await fetch('/api/process_text', {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({text: txt, sbox: sbox, mode: mode})
         });
         const d = await res.json();
-        if (d.status === 'success') document.getElementById('txtResult').value = d.result;
-        else alert("Error: " + d.error);
+        document.getElementById('txtResult').value = d.result;
     }
 
     async function doImage(mode) {
         const sbox = getSbox();
-        if (!sbox || sbox.length !== 256) return alert("Error: Please select a valid S-Box first.");
-
-        const fileInput = document.getElementById('imgInput');
-        const file = fileInput.files[0];
-        if (!file) return alert("Upload image!");
-
+        const file = document.getElementById('imgInput').files[0];
+        if (!sbox || !file) return alert("Check inputs!");
         const fd = new FormData();
         fd.append('image', file);
         fd.append('sbox', sbox.join(','));
         fd.append('mode', mode);
-
         document.getElementById('loader').style.display = 'flex';
-
         try {
             const res = await fetch('/api/process_image', {method: 'POST', body: fd});
             const d = await res.json();
-
             document.getElementById('loader').style.display = 'none';
-
             if (d.status === 'success') {
-                const preview = document.getElementById('imgPreviewArea');
-                preview.classList.remove('hidden');
-
+                document.getElementById('imgPreviewArea').classList.remove('hidden');
                 document.getElementById('imgResult').src = "data:image/png;base64," + d.image_b64;
                 document.getElementById('dlBtn').href = document.getElementById('imgResult').src;
-
-                const statsPanel = document.getElementById('statsPanel');
-                const decryptMsg = document.getElementById('decryptMsg');
-
+                const panel = document.getElementById('statsPanel');
                 if (mode === 'encrypt' && d.stats) {
-                    statsPanel.classList.remove('hidden');
-                    decryptMsg.classList.add('hidden');
-
-                    // Entropy
-                    const ent = d.stats.entropy;
-                    document.getElementById('val-entropy').innerText = ent.toFixed(4);
-                    document.getElementById('bar-entropy').style.width = (ent / 8 * 100) + "%";
-
-                    // NPCR
-                    const npcr = d.stats.npcr;
-                    document.getElementById('val-npcr').innerText = npcr.toFixed(4) + "%";
-                    document.getElementById('bar-npcr').style.width = npcr + "%";
-
-                    // UACI
-                    const uaci = d.stats.uaci;
-                    document.getElementById('val-uaci').innerText = uaci.toFixed(4) + "%";
-                    document.getElementById('bar-uaci').style.width = (uaci * 2) + "%"; // Scale for visual
-
-                    // Correlation
+                    panel.classList.remove('hidden');
+                    document.getElementById('decryptMsg').classList.add('hidden');
+                    document.getElementById('val-entropy').innerText = d.stats.entropy.toFixed(4);
+                    document.getElementById('val-npcr').innerText = d.stats.npcr.toFixed(2) + "%";
+                    document.getElementById('val-uaci').innerText = d.stats.uaci.toFixed(2) + "%";
                     document.getElementById('val-corr-h').innerText = d.stats.corr.H.toFixed(4);
                     document.getElementById('val-corr-v').innerText = d.stats.corr.V.toFixed(4);
                     document.getElementById('val-corr-d').innerText = d.stats.corr.D.toFixed(4);
-
+                    renderHistogram(d.histograms.original, d.histograms.processed);
                 } else {
-                    statsPanel.classList.add('hidden');
-                    decryptMsg.classList.remove('hidden');
+                    panel.classList.add('hidden');
+                    document.getElementById('decryptMsg').classList.remove('hidden');
                 }
-
-            } else {
-                alert("Error: " + d.error);
-            }
+            } else alert("Error: " + d.error);
         } catch (e) {
             document.getElementById('loader').style.display = 'none';
-            alert("Server Error: " + e);
+            alert(e);
         }
+    }
+
+    function renderHistogram(orig, cipher) {
+        const ctx = document.getElementById('histChart').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+        const labels = Array.from({length: 256}, (_, i) => i);
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Encrypted',
+                        data: cipher,
+                        backgroundColor: 'rgba(102, 252, 241, 0.9)',
+                        barPercentage: 1.0,
+                        categoryPercentage: 1.0,
+                        order: 1
+                    },
+                    {
+                        label: 'Original',
+                        data: orig,
+                        backgroundColor: 'rgba(239, 68, 68, 0.5)',
+                        barPercentage: 1.0,
+                        categoryPercentage: 1.0,
+                        order: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: {mode: 'index', intersect: false},
+                plugins: {
+                    legend: {labels: {color: '#c5c6c7', font: {size: 10}}},
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.9)',
+                        titleColor: '#fff',
+                        borderColor: '#333',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ': ' + context.parsed.y + ' pixels';
+                            }
+                        }
+                    },
+                    zoom: {
+                        pan: {enabled: true, mode: 'xy'},
+                        zoom: {wheel: {enabled: true}, pinch: {enabled: true}, mode: 'xy'}
+                    }
+                },
+                scales: {
+                    x: {display: false},
+                    y: {
+                        ticks: {color: '#8892b0', font: {size: 9}},
+                        grid: {color: '#333', drawBorder: false},
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function resetChartZoom() {
+        if (chartInstance) chartInstance.resetZoom();
     }
 </script>
 
